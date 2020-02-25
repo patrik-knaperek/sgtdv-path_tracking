@@ -13,11 +13,11 @@ int main (int argc, char** argv)
 
     synchObj.SetPublisher(publisher);    
 
+    ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 1, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
+    ros::Subscriber actualStateSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoActualState, &synchObj);
     //TODO add names of topics to subscribe to
-    //ros::Subscriber mapSub = handle.subscribe("slam_map", 1, &PathTrackingSynch::Do, &synchObj);
-    //ros::Subscriber poseSub = handle.subscribe("slam_pose", 1, &PathTrackingSynch::UpdatePose, &synchObj);
-    
-    ros::spin();
+    //ros::Subscriber approxStateSub = handle.subscrube("imu-topic", 1, &PathTrackingSynch::DoApproxState, &synchObj);
+    //Do();
 
     return 0;
 }

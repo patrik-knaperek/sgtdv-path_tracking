@@ -14,3 +14,28 @@ void PathTrackingSynch::SetPublisher(ros::Publisher publisher)
 {
     m_pathTracking.SetPublisher(publisher);
 }
+
+void PathTrackingSynch::Do()
+{
+    while (ros::ok())
+    {
+        ros::spinOnce();
+        
+        auto start = std::chrono::steady_clock::now();
+
+        m_pathTracking.Do(m_pathTrackingMsg);
+
+        auto finish = std::chrono::steady_clock::now();
+        auto timePerFrame = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() / 1000.f;
+        float timeDiff = TIME_PER_FRAME - timePerFrame;
+
+        if (timeDiff > 0.f)
+        {
+            sleep(timeDiff);
+        }
+        else
+        {
+            //defenzivne programovanie ftw
+        } 
+    }
+}
