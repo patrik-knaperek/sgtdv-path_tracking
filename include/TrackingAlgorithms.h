@@ -1,3 +1,9 @@
+/*****************************************************/
+//Organization: Stuba Green Team
+//Authors: Tereza Ábelová, Juraj Krasňanský
+/*****************************************************/
+
+
 #include "../include/Messages.h"
 #include <cmath>
 #include "opencv2/core/core.hpp"

@@ -1,3 +1,9 @@
+/*****************************************************/
+//Organization: Stuba Green Team
+//Authors: Tereza Ábelová, Juraj Krasňanský
+/*****************************************************/
+
+
 #include "../include/PathTracking.h"
 
 PathTracking::PathTracking()
