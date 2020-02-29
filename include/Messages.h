@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sgtdv_msgs/PathTrackingMsg.h>
 
 struct PathTrackingMsg
@@ -12,4 +14,4 @@ struct Control
 {
     float speed;
     float steeringAngle;
-}
+};

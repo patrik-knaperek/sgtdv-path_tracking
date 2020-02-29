@@ -5,6 +5,9 @@
 #include "../include/Messages.h"
 //#include <IMU_MSG>
 
+constexpr float CONST_SPEED = 6.f;
+constexpr float CONST_YAW_RATE = 10.f;
+
 class PathTrackingSynch
 {
 public:
@@ -13,8 +16,7 @@ public:
 
     void SetPublisher(ros::Publisher publisher);
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
-    void DoActualState(const sgtdv_msgs::CarState::ConstPtr &msg);
-    //void DoApproxState(const *type* &msg);
+    void DoPoseEstimate(const sgtdv_msgs::CarState::ConstPtr &msg);
     void Do();
 
 private:

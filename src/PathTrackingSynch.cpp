@@ -2,7 +2,8 @@
 
 PathTrackingSynch::PathTrackingSynch()
 {
-
+    m_pathTrackingMsg.speed = CONST_SPEED;
+    m_pathTrackingMsg.yawRate = CONST_YAW_RATE;
 }
 
 PathTrackingSynch::~PathTrackingSynch()
@@ -13,6 +14,16 @@ PathTrackingSynch::~PathTrackingSynch()
 void PathTrackingSynch::SetPublisher(ros::Publisher publisher)
 {
     m_pathTracking.SetPublisher(publisher);
+}
+
+void PathTrackingSynch::DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
+{
+    m_pathTrackingMsg.trajectory = msg;
+}
+
+void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarState::ConstPtr &msg)
+{
+    m_pathTrackingMsg.carState = msg;
 }
 
 void PathTrackingSynch::Do()

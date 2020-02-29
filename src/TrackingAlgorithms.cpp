@@ -1,5 +1,15 @@
 #include "../include/TrackingAlgorithms.h"
 
+TrackingAlgorithm::TrackingAlgorithm()
+{
+
+}
+
+TrackingAlgorithm::~TrackingAlgorithm()
+{
+
+}
+
 
 Stanley::Stanley()
 {
@@ -18,7 +28,7 @@ Control Stanley::Do(const PathTrackingMsg &msg)
     ComputeThetaDelta(msg.carState->yaw, FindClosestPoint(msg.trajectory));
     
     control.steeringAngle = ControlCommand(msg.speed);
-    control.speed = 6.f;
+    control.speed = msg.speed;
 
     return control;
 }

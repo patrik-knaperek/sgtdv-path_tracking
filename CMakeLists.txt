@@ -15,12 +15,14 @@ find_package(catkin REQUIRED COMPONENTS
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME} src/PathTrackingNODE.cpp src/PathTracking.cpp src/PathTrackingSynch.cpp)
+add_executable(${PROJECT_NAME} src/PathTrackingNODE.cpp src/PathTracking.cpp src/PathTrackingSynch.cpp src/TrackingAlgorithms.cpp)
 
 target_link_libraries(path_tracking
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
 )
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+
+
