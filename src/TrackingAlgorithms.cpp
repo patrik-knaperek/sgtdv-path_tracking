@@ -36,9 +36,25 @@ Control Stanley::Do(const PathTrackingMsg &msg)
 {
     Control control;
 
+    if (m_coneIndexOffset >= msg.trajectory->points.size())
+    {
+        control.speed = 0.f;
+        control.steeringAngle = 0.f;
+
+        return control;
+    }
+
     ComputeFrontWheelPos(msg.carState);
     ComputeThetaDelta(msg.carState->yaw, FindClosestPoint(msg.trajectory));
     
+    if (m_coneIndexOffset >= msg.trajectory->points.size())
+    {
+        control.speed = 0.f;
+        control.steeringAngle = 0.f;
+
+        return control;
+    }
+
     control.steeringAngle = ControlCommand(msg.speed);
     control.speed = msg.speed;
 
@@ -67,13 +83,13 @@ cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &traj
         {
             m_coneIndexOffset++;
 
-            if (m_coneIndexOffset >= trajectory->points.size()) m_coneIndexOffset--;        //fakt neviem co by sme tu mali spravit
-
             continue;
         }
 
         return point;
     }
+
+    return cv::Vec2f(0.f, 0.f);
 }
 
 float Stanley::SpeedGain(float speed) const
