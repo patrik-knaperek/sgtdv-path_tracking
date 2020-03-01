@@ -22,6 +22,8 @@ public:
 
     void SetPublisher(ros::Publisher publisher);
     void Do(const PathTrackingMsg &msg);
+    void FreshTrajectory();
+    
 private:
     ros::Publisher m_publisher;
     TrackingAlgorithm *m_algorithm = nullptr;

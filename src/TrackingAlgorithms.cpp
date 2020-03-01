@@ -8,7 +8,7 @@
 
 TrackingAlgorithm::TrackingAlgorithm()
 {
-
+    m_coneIndexOffset = 0;
 }
 
 TrackingAlgorithm::~TrackingAlgorithm()
@@ -16,9 +16,15 @@ TrackingAlgorithm::~TrackingAlgorithm()
 
 }
 
+void TrackingAlgorithm::FreshTrajectory()
+{
+    m_coneIndexOffset = 0;
+}
+
 
 Stanley::Stanley()
 {
+
 }
 
 Stanley::~Stanley()
@@ -51,14 +57,18 @@ void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)
     m_thetaDelta = theta - rad2deg(atan2(tangent[1], tangent[0]));
 }
 
-cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const
+cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory)
 {
-    for (size_t i = 0; i < trajectory->points.size(); i++)
+    for (size_t i = m_coneIndexOffset; i < trajectory->points.size(); i++)
     {
         cv::Vec2f point(trajectory->points[i].x, trajectory->points[i].y);
 
         if (static_cast<float>(cv::norm(m_frontWheelsPos - point)) < CLOSEST_POINT_THRESHOLD)
         {
+            m_coneIndexOffset++;
+
+            if (m_coneIndexOffset >= trajectory->points.size()) m_coneIndexOffset--;        //fakt neviem co by sme tu mali spravit
+
             continue;
         }
 

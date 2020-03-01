@@ -25,8 +25,11 @@ protected:
     TrackingAlgorithm();
     ~TrackingAlgorithm();
 
+    size_t m_coneIndexOffset;   //where to start looking for nearest point
+
 public:
     virtual Control Do(const PathTrackingMsg &msg) = 0;
+    virtual void FreshTrajectory();
 private:
 };
 
@@ -46,7 +49,7 @@ private:
 
     void ComputeFrontWheelPos(const sgtdv_msgs::CarState::ConstPtr &carState);
     void ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint);
-    cv::Vec2f FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const;
+    cv::Vec2f FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory);
     float ControlCommand(float speed) const;
     float SpeedGain(float speed) const;
 };

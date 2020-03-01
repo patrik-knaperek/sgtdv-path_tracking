@@ -21,6 +21,11 @@ void PathTracking::SetPublisher(ros::Publisher publisher)
     m_publisher = publisher;
 }
 
+void PathTracking::FreshTrajectory()
+{
+    m_algorithm->FreshTrajectory();
+}
+
 void PathTracking::Do(const PathTrackingMsg &msg)
 {
     sgtdv_msgs::ControlPtr controlMsg( new sgtdv_msgs::Control );
