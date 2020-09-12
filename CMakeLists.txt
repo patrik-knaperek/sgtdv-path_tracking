@@ -13,6 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   sgtdv_msgs
 )
 
+catkin_package(
+  CATKIN_DEPENDS sgtdv_msgs
+)
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
