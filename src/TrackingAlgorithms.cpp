@@ -64,7 +64,7 @@ Control Stanley::Do(const PathTrackingMsg &msg)
 void Stanley::ComputeFrontWheelPos(const sgtdv_msgs::CarState::ConstPtr &carState)
 {
     const cv::Vec2f pos(carState->position.x, carState->position.y);
-    m_frontWheelsPos = pos + cv::Vec2f(sinf(deg2rad(carState->yaw)), cosf(deg2rad(carState->yaw))) * FRONT_WHEELS_OFFSET;
+    m_frontWheelsPos = pos + cv::Vec2f(sinf(deg2rad(carState->yaw)), cosf(deg2rad(carState->yaw))) * FRONT_WHEELS_OFFSET;   
 }
 
 void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)
