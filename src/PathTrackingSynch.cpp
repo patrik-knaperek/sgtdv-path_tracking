@@ -36,7 +36,7 @@ void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarState::ConstPtr &msg
 void PathTrackingSynch::Do()
 {
     while (ros::ok())
-    {
+    {        
         ros::spinOnce();
         
         auto start = std::chrono::steady_clock::now();

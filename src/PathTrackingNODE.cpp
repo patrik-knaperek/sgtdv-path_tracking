@@ -22,5 +22,7 @@ int main (int argc, char** argv)
     ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 1, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
     ros::Subscriber actualStateSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
 
+    synchObj.Do();
+
     return 0;
 }
