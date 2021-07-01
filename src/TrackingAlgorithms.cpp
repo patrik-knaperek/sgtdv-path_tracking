@@ -44,8 +44,8 @@ Control Stanley::Do(const PathTrackingMsg &msg)
         return control;
     }
 
-    ComputeFrontWheelPos(msg.carState);
-    ComputeThetaDelta(msg.carState->yaw, FindClosestPoint(msg.trajectory));
+    ComputeFrontWheelPos(msg.carPose);
+    ComputeThetaDelta(msg.carPose->yaw, FindClosestPoint(msg.trajectory));
     
     if (m_coneIndexOffset >= msg.trajectory->points.size())
     {
@@ -61,10 +61,10 @@ Control Stanley::Do(const PathTrackingMsg &msg)
     return control;
 }
 
-void Stanley::ComputeFrontWheelPos(const sgtdv_msgs::CarState::ConstPtr &carState)
+void Stanley::ComputeFrontWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
 {
-    const cv::Vec2f pos(carState->position.x, carState->position.y);
-    m_frontWheelsPos = pos + cv::Vec2f(sinf(deg2rad(carState->yaw)), cosf(deg2rad(carState->yaw))) * FRONT_WHEELS_OFFSET;   
+    const cv::Vec2f pos(carPose->position.x, carPose->position.y);
+    m_frontWheelsPos = pos + cv::Vec2f(sinf(deg2rad(carPose->yaw)), cosf(deg2rad(carPose->yaw))) * FRONT_WHEELS_OFFSET;   
 }
 
 void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)

@@ -48,7 +48,7 @@ private:
     cv::Vec2f m_frontWheelsPos;
     float m_thetaDelta;
 
-    void ComputeFrontWheelPos(const sgtdv_msgs::CarState::ConstPtr &carState);
+    void ComputeFrontWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose);
     void ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint);
     cv::Vec2f FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory);
     float ControlCommand(float speed) const;

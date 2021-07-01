@@ -28,9 +28,9 @@ void PathTrackingSynch::DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstP
     m_pathTracking.FreshTrajectory();
 }
 
-void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarState::ConstPtr &msg)
+void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg)
 {
-    m_pathTrackingMsg.carState = msg;
+    m_pathTrackingMsg.carPose = msg;
 }
 
 void PathTrackingSynch::Do()
