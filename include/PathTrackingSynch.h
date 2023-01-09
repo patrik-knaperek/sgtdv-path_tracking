@@ -10,16 +10,17 @@
 #include <sgtdv_msgs/CarPose.h>
 #include "../include/Messages.h"
 
-constexpr float CONST_SPEED = 6.f;
-constexpr float CONST_YAW_RATE = 10.f;
+/*constexpr float CONST_SPEED = 6.f;
+constexpr float CONST_YAW_RATE = 10.f;*/
 
 class PathTrackingSynch
 {
 public:
-    PathTrackingSynch();
+    PathTrackingSynch(ros::NodeHandle &handle);
     ~PathTrackingSynch();
 
-    void SetPublisher(ros::Publisher publisher);
+    void SetParams(float constSpeed, float constYawRate);
+    void SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub);
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
     void Do();
@@ -27,4 +28,10 @@ public:
 private:
     PathTracking m_pathTracking;
     PathTrackingMsg m_pathTrackingMsg;
+
+    bool m_trajectoryReady = false;
+
+    // parameters
+    float m_constSpeed;
+    float m_constYawRate;
 };

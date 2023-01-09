@@ -7,17 +7,26 @@
 #include <ros/ros.h>
 #include "../include/PathTrackingSynch.h"
 #include <sgtdv_msgs/Control.h>
+#include <visualization_msgs/Marker.h>
 
 int main (int argc, char** argv)
 {
-    PathTrackingSynch synchObj;
-
     ros::init(argc, argv, "pathTracking");
     ros::NodeHandle handle;
+    PathTrackingSynch synchObj(handle);
 
-    ros::Publisher publisher = handle.advertise<sgtdv_msgs::Control>("pathtracking_commands", 1);
+    // load parameters
+    float constSpeed, constYawRate;
+    if(!handle.getParam("/const_speed", constSpeed))
+        ROS_ERROR("Failed to get parameter \"/const_speed\" from server\n");
+    if(!handle.getParam("/const_yaw_rate", constYawRate))
+        ROS_ERROR("Failed to get parameter \"/const_yaw_rate\" from server\n");
+    synchObj.SetParams(constSpeed, constYawRate);
 
-    synchObj.SetPublisher(publisher);    
+    ros::Publisher commandPublisher = handle.advertise<sgtdv_msgs::Control>("pathtracking_commands", 1);
+    ros::Publisher targetPublisher = handle.advertise<visualization_msgs::Marker>("pathtracking_target",1);
+
+    synchObj.SetPublishers(commandPublisher, targetPublisher);    
 
     ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 1, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
     ros::Subscriber actualStateSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);

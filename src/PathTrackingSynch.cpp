@@ -6,10 +6,11 @@
 
 #include "../include/PathTrackingSynch.h"
 
-PathTrackingSynch::PathTrackingSynch()
+PathTrackingSynch::PathTrackingSynch(ros::NodeHandle &handle) :
+    m_pathTracking(handle)
 {
-    m_pathTrackingMsg.speed = CONST_SPEED;
-    m_pathTrackingMsg.yawRate = CONST_YAW_RATE;
+    //m_pathTrackingMsg.speed = CONST_SPEED;
+    //m_pathTrackingMsg.yawRate = CONST_YAW_RATE;
 }
 
 PathTrackingSynch::~PathTrackingSynch()
@@ -17,15 +18,25 @@ PathTrackingSynch::~PathTrackingSynch()
 
 }
 
-void PathTrackingSynch::SetPublisher(ros::Publisher publisher)
+void PathTrackingSynch::SetParams(float constSpeed, float constYawRate)
 {
-    m_pathTracking.SetPublisher(publisher);
+                    m_constSpeed = constSpeed;
+                    m_constYawRate = constYawRate;
+
+                    m_pathTrackingMsg.speed = m_constSpeed;
+                    m_pathTrackingMsg.yawRate = m_constYawRate;
+}
+
+void PathTrackingSynch::SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub)
+{
+    m_pathTracking.SetPublishers(cmdPub, targetPub);
 }
 
 void PathTrackingSynch::DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
 {
     m_pathTrackingMsg.trajectory = msg;
     m_pathTracking.FreshTrajectory();
+    m_trajectoryReady = true;
 }
 
 void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg)
@@ -38,6 +49,8 @@ void PathTrackingSynch::Do()
     while (ros::ok())
     {        
         ros::spinOnce();
+
+        if(!m_trajectoryReady) continue;
         
         auto start = std::chrono::steady_clock::now();
 

@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <rosparam command="load" file="$(find path_tracking)/params/path_tracking.yaml"/>
+	<node pkg="path_tracking" type="path_tracking" name="pathTracking" output="screen"/>
+</launch>

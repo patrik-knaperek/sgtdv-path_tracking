@@ -1,0 +1,20 @@
+const_speed: 0.04
+const_yaw_rate: 10.0
+closest_point_treshold: 0.2
+control_gain: 1.0
+
+# car parameters
+car_length: 1.53
+rear_wheels_offset: 1.22
+front_wheels_offset: 1.22
+
+# controller parameters
+controller:
+  speed:
+    p: 0.01       
+    i: 0.00001    
+    d: 0.0001     
+  steering:
+    p: 0.6
+    i: 1.0
+    d: 0.1
