@@ -1,6 +1,6 @@
 /*****************************************************/
 //Organization: Stuba Green Team
-//Authors: Juraj Krasňanský
+//Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
 
@@ -14,14 +14,6 @@ int main (int argc, char** argv)
     ros::init(argc, argv, "pathTracking");
     ros::NodeHandle handle;
     PathTrackingSynch synchObj(handle);
-
-    // load parameters
-    float constSpeed, constYawRate;
-    if(!handle.getParam("/const_speed", constSpeed))
-        ROS_ERROR("Failed to get parameter \"/const_speed\" from server\n");
-    if(!handle.getParam("/const_yaw_rate", constYawRate))
-        ROS_ERROR("Failed to get parameter \"/const_yaw_rate\" from server\n");
-    synchObj.SetParams(constSpeed, constYawRate);
 
     ros::Publisher commandPublisher = handle.advertise<sgtdv_msgs::Control>("pathtracking_commands", 1);
     ros::Publisher targetPublisher = handle.advertise<visualization_msgs::Marker>("pathtracking_target",1);

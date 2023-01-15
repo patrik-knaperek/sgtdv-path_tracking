@@ -18,6 +18,6 @@ struct PathTrackingMsg
 
 struct Control
 {
-    float speed;
+    int8_t speed;
     float steeringAngle;
 };

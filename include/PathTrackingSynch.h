@@ -1,6 +1,6 @@
 /*****************************************************/
 //Organization: Stuba Green Team
-//Authors: Juraj Krasňanský
+//Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
 
@@ -10,28 +10,28 @@
 #include <sgtdv_msgs/CarPose.h>
 #include "../include/Messages.h"
 
-/*constexpr float CONST_SPEED = 6.f;
-constexpr float CONST_YAW_RATE = 10.f;*/
-
 class PathTrackingSynch
 {
 public:
     PathTrackingSynch(ros::NodeHandle &handle);
     ~PathTrackingSynch();
 
-    void SetParams(float constSpeed, float constYawRate);
     void SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub);
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
     void Do();
+    void VelocityEstimate(PathTrackingMsg &msg, const sgtdv_msgs::CarPosePtr &poseDelta, double &timeDelta);
 
 private:
+    void SetLastPose(const sgtdv_msgs::CarPose::ConstPtr &msg);
+
     PathTracking m_pathTracking;
     PathTrackingMsg m_pathTrackingMsg;
 
     bool m_trajectoryReady = false;
+    sgtdv_msgs::CarPose m_lastPose;
 
     // parameters
-    float m_constSpeed;
+    float m_refSpeed;
     float m_constYawRate;
 };

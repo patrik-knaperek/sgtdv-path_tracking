@@ -1,6 +1,6 @@
 /*****************************************************/
 //Organization: Stuba Green Team
-//Authors: Tereza Ábelová, Juraj Krasňanský
+//Authors: Tereza Ábelová, Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
 
@@ -12,15 +12,11 @@
 #include <sgtdv_msgs/Point2D.h>
 #include <visualization_msgs/Marker.h>
 
+constexpr float FPS = 60.f;
+constexpr float TIME_PER_FRAME = 1.f / FPS;
+
 #define deg2rad(x) (x*M_PI/180.f)
 #define rad2deg(x) (x*180.f/M_PI)
-
-/*constexpr float CAR_LENGTH = 2.f;
-constexpr float REAR_WHEELS_OFFSET = 0.9f;
-constexpr float FRONT_WHEELS_OFFSET = 1.1f;
-constexpr float CLOSEST_POINT_THRESHOLD = 0.2f;
-constexpr float CONTROL_GAIN = 1.f;*/
-
 
 class TrackingAlgorithm
 {
@@ -30,11 +26,16 @@ protected:
 
     virtual void LoadParams();
     virtual void VisualizeTargetPoint(float point_x, float point_y);
+    virtual void ComputeSpeedCommand(const float actSpeed);
 
     size_t m_coneIndexOffset;   //where to start looking for nearest point
     ros::Publisher m_targetPub;
     ros::NodeHandle m_handle;
     Control m_control;
+    
+    float m_ramp = 0;
+    double m_integralSpeed = 0;
+    double m_previousSpeedError = 0;
 
     // parameters
     float m_carLength;
@@ -42,21 +43,28 @@ protected:
     float m_frontWheelsOffset;
     float m_closestPointTreshold;
     float m_controlGain;
+    float m_refSpeed;
 
     // controller parameters
     float m_speedP;
     float m_speedI;
     float m_speedD;
+    int8_t m_speedMax;
+    int8_t m_speedMin;
+
     float m_steeringP;
     float m_steeringI;
     float m_steeringD;
+    float m_steeringMax;
+    float m_steeringMin;
 
 public:
     virtual Control Do(const PathTrackingMsg &msg) = 0;
     virtual void FreshTrajectory();
     virtual void SetPublisher(ros::Publisher targetPub);
-    virtual void SetParams(float carLength, float rearWheelsOffset, float frontWheelsOffset, float closestPointTreshold, float controlGain);
-    virtual void SetControllerParams(float speedP, float speedI, float speedD, float steerP, float steerI, float steerD);
+    virtual void SetParams(float carLength, float rearWheelsOffset, float frontWheelsOffset, float closestPointTreshold, float controlGain, float constSpeed);
+    virtual void SetControllerParams(float speedP, float speedI, float speedD, int8_t speedMax, int8_t speedMin,
+                                     float steerP, float steerI, float steerD, float steerMax, float steerMin);
 private:
 };
 
@@ -92,5 +100,7 @@ public:
     virtual Control Do(const PathTrackingMsg &msg);
 
 private:
+    sgtdv_msgs::Point2D FindTargetPoint(const PathTrackingMsg &msg);
+    void ComputeSteeringCommand(const PathTrackingMsg &msg, const sgtdv_msgs::Point2D &targetPoint);
 
 };

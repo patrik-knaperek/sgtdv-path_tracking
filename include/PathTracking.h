@@ -11,9 +11,6 @@
 #include "../include/TrackingAlgorithms.h"
 #include <sgtdv_msgs/Control.h>
 
-constexpr float FPS = 60.f;
-constexpr float TIME_PER_FRAME = 1.f / FPS;
-
 class PathTracking
 {
 public:
@@ -23,14 +20,6 @@ public:
     void SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub);
     void Do(const PathTrackingMsg &msg);
     void FreshTrajectory();
-    void SetParams(float carLength, float rearWheelsOffset, float frontWheelsOffset, float closestPointTreshold, float controlGain)
-    {
-        m_algorithm->SetParams(carLength, rearWheelsOffset, frontWheelsOffset, closestPointTreshold, controlGain);
-    };
-    void SetControllerParams(float speedP, float speedI, float speedD, float steerP, float steerI, float steerD)
-    {
-        m_algorithm->SetControllerParams(speedP, speedI, speedD, steerP, steerI, steerD);
-    };
     
 private:
     ros::Publisher m_publisher;
