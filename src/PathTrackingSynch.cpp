@@ -33,7 +33,7 @@ void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg)
 {
     m_pathTrackingMsg.carPose = msg;
 
-    static bool firstMessage = true;
+    /*static bool firstMessage = true;
     if (firstMessage)
     {
         this->SetLastPose(msg);
@@ -52,10 +52,15 @@ void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg)
         VelocityEstimate(m_pathTrackingMsg, poseDelta, timeDelta);
 
         this->SetLastPose(msg);
-    }
+    }*/
 }
 
-void PathTrackingSynch::SetLastPose(const sgtdv_msgs::CarPose::ConstPtr &msg)
+void PathTrackingSynch::DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg)
+{
+    m_pathTrackingMsg.carVel = msg;
+}
+
+/*void PathTrackingSynch::SetLastPose(const sgtdv_msgs::CarPose::ConstPtr &msg)
 {
     m_lastPose.position.x = msg->position.x;
     m_lastPose.position.y = msg->position.y;
@@ -80,7 +85,7 @@ void PathTrackingSynch::VelocityEstimate(PathTrackingMsg &msg, const sgtdv_msgs:
         const double R = std::hypot(poseDelta->position.x, poseDelta->position.y) / (2 * std::sin(std::abs(poseDelta->yaw) / 2));
         msg.speed = static_cast<float>(std::abs(yawRate) * R);
     }
-}
+}*/
 
 void PathTrackingSynch::Do()
 {

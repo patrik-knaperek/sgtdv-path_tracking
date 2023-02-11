@@ -5,8 +5,8 @@ control_gain: 1.0
 
 # car parameters
 car_length: 1.53
-rear_wheels_offset: 1.22
-front_wheels_offset: 1.22
+rear_wheels_offset: 0.719
+front_wheels_offset: 0.811
 
 # controller parameters
 controller:

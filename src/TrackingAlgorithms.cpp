@@ -101,23 +101,25 @@ void TrackingAlgorithm::SetControllerParams(float speedP, float speedI, float sp
     m_steeringMin = steerMin;
 }
 
-void TrackingAlgorithm::VisualizeTargetPoint(float p_x, float p_y)
+void TrackingAlgorithm::VisualizePoint(float p_x, float p_y, int p_id, cv::Vec3f color)
 {
     visualization_msgs::Marker marker;
     
-    marker.color.r            = 1.0;
-    marker.color.a            = 1.0;
-    marker.pose.position.x    = p_x;
-    marker.pose.position.y    = p_y;
-    marker.pose.orientation.w = 1.0;
-    marker.type               = visualization_msgs::Marker::SPHERE;
-    marker.action             = visualization_msgs::Marker::ADD;
-    marker.id                 = 0;
-    marker.scale.x            = 0.5;
-    marker.scale.y            = 0.5;
-    marker.scale.z            = 0.5;
-    marker.header.stamp       = ros::Time::now();
-    marker.header.frame_id    = "map";
+    marker.color.r              = color(0);
+    marker.color.g              = color(1);
+    marker.color.b              = color(2);
+    marker.color.a              = 1.0;
+    marker.pose.position.x      = p_x;
+    marker.pose.position.y      = p_y;
+    marker.pose.orientation.w   = 1.0;
+    marker.type                 = visualization_msgs::Marker::SPHERE;
+    marker.action               = visualization_msgs::Marker::ADD;
+    marker.id                   = p_id;
+    marker.scale.x              = 0.5;
+    marker.scale.y              = 0.5;
+    marker.scale.z              = 0.5;
+    marker.header.stamp         = ros::Time::now();
+    marker.header.frame_id      = "map";
     m_targetPub.publish(marker);
 }
 
@@ -129,22 +131,20 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
     {
         m_ramp += 0.1;
     }
-    //std::cout << "speedError = " << speedError << std::endl;
 
     // integral
     if (m_control.speed < m_speedMax)   // Anti-windup
     {
         m_integralSpeed += speedError * TIME_PER_FRAME;
     }
-    //std::cout << "integralSpeed = " << m_integralSpeed << std::endl;
-
+    
     // derivative
     const double derivativeSpeed = (speedError - m_previousSpeedError) / TIME_PER_FRAME;
     m_previousSpeedError = speedError;
 
     // P + I + D
     m_control.speed = static_cast<uint8_t>(m_ramp * (m_speedP * speedError + m_speedI * m_integralSpeed + m_speedD * derivativeSpeed));
-
+    
     // saturation
     if (m_control.speed > m_speedMax)
     {
@@ -168,8 +168,6 @@ Stanley::~Stanley()
 
 Control Stanley::Do(const PathTrackingMsg &msg)
 {
-    //Control m_control;
-
     if (m_coneIndexOffset >= msg.trajectory->points.size())
     {
         m_control.speed = 0.f;
@@ -189,8 +187,17 @@ Control Stanley::Do(const PathTrackingMsg &msg)
         return m_control;
     }
 
-    m_control.steeringAngle = ControlCommand(msg.speed);
-    m_control.speed = msg.speed;
+    m_control.steeringAngle = ControlCommand(msg.carVel->speed);
+    // saturation
+    if (m_control.steeringAngle > m_steeringMax)
+    {
+        m_control.steeringAngle = m_steeringMax;
+    } else if (m_control.steeringAngle < m_steeringMin)
+    {
+        m_control.steeringAngle = m_steeringMin;
+    }
+
+    this->ComputeSpeedCommand(msg.carVel->speed);
 
     return m_control;
 }
@@ -198,30 +205,33 @@ Control Stanley::Do(const PathTrackingMsg &msg)
 void Stanley::ComputeFrontWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
 {
     const cv::Vec2f pos(carPose->position.x, carPose->position.y);
-    m_frontWheelsPos = pos + cv::Vec2f(sinf(deg2rad(carPose->yaw)), cosf(deg2rad(carPose->yaw))) * m_frontWheelsOffset;   
+    m_frontWheelsPos = pos + cv::Vec2f(cosf(carPose->yaw), sinf(carPose->yaw)) * m_frontWheelsOffset;
+    VisualizePoint(m_frontWheelsPos(0), m_frontWheelsPos(1), 2, cv::Vec3f(0.0, 0.0, 1.0));
 }
 
 void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)
 {
     const cv::Vec2f tangent(closestPoint - m_frontWheelsPos);
-    m_thetaDelta = theta - rad2deg(atan2(tangent[1], tangent[0]));
+    m_thetaDelta = theta - atan2(tangent[1], tangent[0]);
 }
 
 cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory)
 {
     for (size_t i = m_coneIndexOffset; i < trajectory->points.size(); i++)
     {
-        cv::Vec2f point(trajectory->points[i].x, trajectory->points[i].y);
+        cv::Vec2f pointA(trajectory->points[i].x, trajectory->points[i].y);
+        cv::Vec2f pointB(trajectory->points[i+1].x, trajectory->points[i+1].y);
 
-        if (static_cast<float>(cv::norm(m_frontWheelsPos - point)) < m_closestPointTreshold)
+        if (static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) > static_cast<float>(cv::norm(m_frontWheelsPos - pointB)) ||
+            static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) < m_closestPointTreshold)
         {
             m_coneIndexOffset++;
 
             continue;
         }
-
-        VisualizeTargetPoint(point[0], point[1]);
-        return point;
+        VisualizePoint(pointA[0], pointA[1], 0, cv::Vec3f(1.0, 0.0, 0.0));
+        VisualizePoint(pointB[0], pointB[1], 1, cv::Vec3f(1.0, 1.0, 0.0));
+        return pointA;
     }
 
     return cv::Vec2f(0.f, 0.f);
@@ -229,7 +239,13 @@ cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &traj
 
 float Stanley::SpeedGain(float speed) const
 {
-    return m_controlGain / speed; //needs testing
+    if (speed != 0)
+    {
+        return m_controlGain / speed; //needs testing
+    } 
+    else
+        return 1;
+    
 }
 
 float Stanley::ControlCommand(float speed) const
@@ -251,9 +267,9 @@ PurePursuit::~PurePursuit()
 Control PurePursuit::Do(const PathTrackingMsg &msg)
 {    
     sgtdv_msgs::Point2D targetPoint = FindTargetPoint(msg);
-    this->VisualizeTargetPoint(targetPoint.x, targetPoint.y);
+    this->VisualizePoint(targetPoint.x, targetPoint.y, 0, cv::Vec3f(1.0, 0.0, 0.0));
     this->ComputeSteeringCommand(msg, targetPoint);
-    this->ComputeSpeedCommand(msg.speed);
+    this->ComputeSpeedCommand(msg.carVel->speed);
 
     return m_control;
 }
@@ -280,14 +296,12 @@ sgtdv_msgs::Point2D PurePursuit::FindTargetPoint(const PathTrackingMsg &msg)
 void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const sgtdv_msgs::Point2D &targetPoint)
 {
     const double theta = msg.carPose->yaw;
-    //std::cout << "theta = " << theta << std::endl;
     const double alpha = std::atan2((targetPoint.y - msg.carPose->position.y),(targetPoint.x - msg.carPose->position.x)) - theta;
     const double lookAheadDist = std::hypot((targetPoint.y - msg.carPose->position.y), (targetPoint.x - msg.carPose->position.x));
     const double steeringAngleAct = m_control.steeringAngle;
     const double steeringAngleWish = std::atan2(2*std::sin(alpha)*m_carLength,lookAheadDist);
     const double steeringAngleError = steeringAngleWish - steeringAngleAct;
-    //std::cout << "steeringError = " << steeringAngleError << std::endl;
-
+    
     m_control.steeringAngle = static_cast<float>(m_steeringP * steeringAngleError);
 
     // saturation
@@ -298,5 +312,4 @@ void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const sgtdv
     {
         m_control.steeringAngle = m_steeringMin;
     }
-    //std::cout << "steeringAngle = " << m_control.steeringAngle << std::endl;
 }

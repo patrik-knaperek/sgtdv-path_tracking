@@ -8,6 +8,7 @@
 #include "../include/PathTracking.h"
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
+#include <sgtdv_msgs/CarVel.h>
 #include "../include/Messages.h"
 
 class PathTrackingSynch
@@ -19,11 +20,12 @@ public:
     void SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub);
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
+    void DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg);
     void Do();
-    void VelocityEstimate(PathTrackingMsg &msg, const sgtdv_msgs::CarPosePtr &poseDelta, double &timeDelta);
+    //void VelocityEstimate(PathTrackingMsg &msg, const sgtdv_msgs::CarPosePtr &poseDelta, double &timeDelta);
 
 private:
-    void SetLastPose(const sgtdv_msgs::CarPose::ConstPtr &msg);
+    //void SetLastPose(const sgtdv_msgs::CarPose::ConstPtr &msg);
 
     PathTracking m_pathTracking;
     PathTrackingMsg m_pathTrackingMsg;

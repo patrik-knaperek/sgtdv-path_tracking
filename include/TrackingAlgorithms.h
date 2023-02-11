@@ -25,7 +25,7 @@ protected:
     ~TrackingAlgorithm();
 
     virtual void LoadParams();
-    virtual void VisualizeTargetPoint(float point_x, float point_y);
+    virtual void VisualizePoint(float point_x, float point_y, int point_id, cv::Vec3f color);
     virtual void ComputeSpeedCommand(const float actSpeed);
 
     size_t m_coneIndexOffset;   //where to start looking for nearest point

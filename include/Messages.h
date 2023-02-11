@@ -12,8 +12,7 @@ struct PathTrackingMsg
 {
     sgtdv_msgs::CarPose::ConstPtr carPose;
     sgtdv_msgs::Point2DArr::ConstPtr trajectory;
-    float speed;
-    float yawRate;
+    sgtdv_msgs::CarVel::ConstPtr carVel;
 };
 
 struct Control

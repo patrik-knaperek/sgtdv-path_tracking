@@ -8,7 +8,7 @@
 
 PathTracking::PathTracking(ros::NodeHandle &handle)
 {
-    //m_algorithm = new Stanley(handle);
+    //m_algorithm = new Stanley(handle); // malfunctioning, needs fix
     m_algorithm = new PurePursuit(handle);
 }
 
