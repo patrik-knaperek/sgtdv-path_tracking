@@ -13,12 +13,9 @@ controller:
   speed:
     p: 10       
     i: 0.02    
-    d: -0.0
     max: 100
     min: 0 
   steering:
-    p: 0.8
-    i: 1.0
-    d: 0.1
+    k: 0.8
     max: 1
     min: -1

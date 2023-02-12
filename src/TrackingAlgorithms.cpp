@@ -40,29 +40,23 @@ void TrackingAlgorithm::LoadParams()
     this->SetParams(carLength, rearWheelsOffset, frontWheelsOffset, closestPointTreshold, controlGain, refSpeed);
 
     // load controller parameters
-    float speedP, speedI, speedD, steerP, speedMax, speedMin, steerI, steerD, steerMax, steerMin;
+    float speedP, speedI, speedMax, speedMin, steerK, steerMax, steerMin;
     if(!m_handle.getParam("controller/speed/p", speedP))
         ROS_ERROR("Failed to get parameter \"/controller/speed/p\" from server\n");
     if(!m_handle.getParam("controller/speed/i", speedI))
         ROS_ERROR("Failed to get parameter \"/controller/speed/i\" from server\n");
-    if(!m_handle.getParam("controller/speed/d", speedD))
-        ROS_ERROR("Failed to get parameter \"/controller/speed/d\" from server\n");
     if(!m_handle.getParam("controller/speed/max", speedMax))
         ROS_ERROR("Failed to get parameter \"/controller/speed/max\" from server\n");
     if(!m_handle.getParam("controller/speed/min", speedMin))
         ROS_ERROR("Failed to get parameter \"/controller/speed/min\" from server\n");
-    if(!m_handle.getParam("controller/steering/p", steerP))
-        ROS_ERROR("Failed to get parameter \"/controller/steering/p\" from server\n");
-    if(!m_handle.getParam("controller/steering/i", steerI))
-        ROS_ERROR("Failed to get parameter \"/controller/steering/i\" from server\n");
-    if(!m_handle.getParam("controller/steering/d", steerD))
-        ROS_ERROR("Failed to get parameter \"/controller/steering/d\" from server\n");
+    if(!m_handle.getParam("controller/steering/k", steerK))
+        ROS_ERROR("Failed to get parameter \"/controller/steering/k\" from server\n");
     if(!m_handle.getParam("controller/steering/max", steerMax))
         ROS_ERROR("Failed to get parameter \"/controller/steering/max\" from server\n");
     if(!m_handle.getParam("controller/steering/min", steerMin))
         ROS_ERROR("Failed to get parameter \"/controller/steering/min\" from server\n");
-    this->SetControllerParams(speedP, speedI, speedD, static_cast<int8_t>(speedMax), static_cast<int8_t>(speedMin),
-                             steerP, steerI, steerD, steerMax, steerMin);
+    this->SetControllerParams(speedP, speedI, static_cast<int8_t>(speedMax), static_cast<int8_t>(speedMin),
+                             steerK, steerMax, steerMin);
 }
 
 void TrackingAlgorithm::FreshTrajectory()
@@ -80,28 +74,25 @@ void TrackingAlgorithm::SetParams(float carLength, float rearWheelsOffset, float
     m_carLength = carLength;
     m_rearWheelsOffset = rearWheelsOffset;
     m_frontWheelsOffset = frontWheelsOffset;
-    m_closestPointTreshold = closestPointTreshold;
+    m_lookAheadDist = closestPointTreshold;
     m_controlGain = controlGain;
     m_refSpeed = refSpeed;
 }
 
-void TrackingAlgorithm::SetControllerParams(float speedP, float speedI, float speedD, int8_t speedMax, int8_t speedMin,
-                                            float steerP, float steerI, float steerD, float steerMax, float steerMin)
+void TrackingAlgorithm::SetControllerParams(float speedP, float speedI, int8_t speedMax, int8_t speedMin,
+                                            float steerK, float steerMax, float steerMin)
 {
     m_speedP = speedP;
     m_speedI = speedI;
-    m_speedD = speedD;
     m_speedMax = speedMax;
     m_speedMin = speedMin;
 
-    m_steeringP = steerP;
-    m_steeringI = steerI;
-    m_steeringD = steerD;
+    m_steeringK = steerK;
     m_steeringMax = steerMax;
     m_steeringMin = steerMin;
 }
 
-void TrackingAlgorithm::VisualizePoint(float p_x, float p_y, int p_id, cv::Vec3f color)
+void TrackingAlgorithm::VisualizePoint(cv::Vec2f point, int p_id, cv::Vec3f color)
 {
     visualization_msgs::Marker marker;
     
@@ -109,8 +100,8 @@ void TrackingAlgorithm::VisualizePoint(float p_x, float p_y, int p_id, cv::Vec3f
     marker.color.g              = color(1);
     marker.color.b              = color(2);
     marker.color.a              = 1.0;
-    marker.pose.position.x      = p_x;
-    marker.pose.position.y      = p_y;
+    marker.pose.position.x      = point[0];
+    marker.pose.position.y      = point[1];
     marker.pose.orientation.w   = 1.0;
     marker.type                 = visualization_msgs::Marker::SPHERE;
     marker.action               = visualization_msgs::Marker::ADD;
@@ -129,21 +120,21 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
     const double speedError = m_refSpeed - actSpeed;
     if (m_ramp < 1)
     {
-        m_ramp += 0.1;
+        m_ramp += 1.f/512.f;
     }
+
+    // proportional
+    m_control.speed = static_cast<uint8_t>(m_ramp * m_speedP * speedError);
 
     // integral
-    if (m_control.speed < m_speedMax)   // Anti-windup
+    if (m_speedI)
     {
+        if (m_control.speed < m_speedMax)   // Anti-windup
+        {
         m_integralSpeed += speedError * TIME_PER_FRAME;
+        }
+        m_control.speed += static_cast<uint8_t>(m_ramp * m_speedI * m_integralSpeed);
     }
-    
-    // derivative
-    const double derivativeSpeed = (speedError - m_previousSpeedError) / TIME_PER_FRAME;
-    m_previousSpeedError = speedError;
-
-    // P + I + D
-    m_control.speed = static_cast<uint8_t>(m_ramp * (m_speedP * speedError + m_speedI * m_integralSpeed + m_speedD * derivativeSpeed));
     
     // saturation
     if (m_control.speed > m_speedMax)
@@ -177,7 +168,7 @@ Control Stanley::Do(const PathTrackingMsg &msg)
     }
 
     ComputeFrontWheelPos(msg.carPose);
-    ComputeThetaDelta(msg.carPose->yaw, FindClosestPoint(msg.trajectory));
+    ComputeThetaDelta(msg.carPose->yaw, FindTargetPoint(msg.trajectory));
     
     if (m_coneIndexOffset >= msg.trajectory->points.size())
     {
@@ -206,7 +197,7 @@ void Stanley::ComputeFrontWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
 {
     const cv::Vec2f pos(carPose->position.x, carPose->position.y);
     m_frontWheelsPos = pos + cv::Vec2f(cosf(carPose->yaw), sinf(carPose->yaw)) * m_frontWheelsOffset;
-    VisualizePoint(m_frontWheelsPos(0), m_frontWheelsPos(1), 2, cv::Vec3f(0.0, 0.0, 1.0));
+    VisualizePoint(m_frontWheelsPos, 2, cv::Vec3f(0.0, 0.0, 1.0));
 }
 
 void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)
@@ -215,7 +206,7 @@ void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)
     m_thetaDelta = theta - atan2(tangent[1], tangent[0]);
 }
 
-cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory)
+cv::Vec2f Stanley::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory)
 {
     for (size_t i = m_coneIndexOffset; i < trajectory->points.size(); i++)
     {
@@ -223,14 +214,14 @@ cv::Vec2f Stanley::FindClosestPoint(const sgtdv_msgs::Point2DArr::ConstPtr &traj
         cv::Vec2f pointB(trajectory->points[i+1].x, trajectory->points[i+1].y);
 
         if (static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) > static_cast<float>(cv::norm(m_frontWheelsPos - pointB)) ||
-            static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) < m_closestPointTreshold)
+            static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) < m_lookAheadDist)
         {
             m_coneIndexOffset++;
 
             continue;
         }
-        VisualizePoint(pointA[0], pointA[1], 0, cv::Vec3f(1.0, 0.0, 0.0));
-        VisualizePoint(pointB[0], pointB[1], 1, cv::Vec3f(1.0, 1.0, 0.0));
+        VisualizePoint(pointA, 0, cv::Vec3f(1.0, 0.0, 0.0));
+        VisualizePoint(pointB, 1, cv::Vec3f(1.0, 1.0, 0.0));
         return pointA;
     }
 
@@ -266,43 +257,75 @@ PurePursuit::~PurePursuit()
 
 Control PurePursuit::Do(const PathTrackingMsg &msg)
 {    
-    sgtdv_msgs::Point2D targetPoint = FindTargetPoint(msg);
-    this->VisualizePoint(targetPoint.x, targetPoint.y, 0, cv::Vec3f(1.0, 0.0, 0.0));
+    ComputeRearWheelPos(msg.carPose);
+    m_lookAheadDist = ComputeLookAheadDist(msg.carVel);
+    cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
+    this->VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
     this->ComputeSteeringCommand(msg, targetPoint);
     this->ComputeSpeedCommand(msg.carVel->speed);
 
     return m_control;
 }
 
-sgtdv_msgs::Point2D PurePursuit::FindTargetPoint(const PathTrackingMsg &msg)
+void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
 {
-    const auto centerLineIt  = std::min_element(msg.trajectory->points.begin(), msg.trajectory->points.end(),
+    const cv::Vec2f pos(carPose->position.x, carPose->position.y);
+    m_rearWheelsPos = pos - cv::Vec2f(cosf(carPose->yaw), sinf(carPose->yaw)) * m_rearWheelsOffset;
+    //VisualizePoint(m_rearWheelsPos, 2, cv::Vec3f(0.0, 0.0, 1.0));
+}
+
+float PurePursuit::ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel)
+{
+    float temp = m_steeringK * carVel->speed;
+    
+    if (temp < LOOK_AHEAD_MIN)
+    {
+        return LOOK_AHEAD_MIN;
+    } else if (temp > LOOK_AHEAD_MAX)
+    {
+        return LOOK_AHEAD_MAX;
+    } else
+    {
+        return temp;
+    }
+}
+
+cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory)
+{
+    const auto centerLineIt  = std::min_element(trajectory->points.begin(), trajectory->points.end(),
                                                 [&](const sgtdv_msgs::Point2D &a,
                                                 const sgtdv_msgs::Point2D &b) {
-                                                const double da = std::hypot(msg.carPose->position.x - a.x,
-                                                                            msg.carPose->position.y - a.y);
-                                                const double db = std::hypot(msg.carPose->position.x - b.x,
-                                                                            msg.carPose->position.y - b.y);
+                                                const double da = std::hypot(m_rearWheelsPos[0] - a.x,
+                                                                            m_rearWheelsPos[1] - a.y);
+                                                const double db = std::hypot(m_rearWheelsPos[0] - b.x,
+                                                                            m_rearWheelsPos[1] - b.y);
 
                                                 return da < db;
                                                 });
-    const auto centerLineIdx = std::distance(msg.trajectory->points.begin(), centerLineIt);
-    const auto size          = msg.trajectory->points.size();
-    const auto nextIdx       = (centerLineIdx + 10) % size;
+    const auto centerLineIdx = std::distance(trajectory->points.begin(), centerLineIt);
+    const auto size          = trajectory->points.size();
 
-    return msg.trajectory->points[nextIdx];
+    static int offset;
+    static int nextIdx;
+    static cv::Vec2f targetPoint;
+
+    offset = 0;
+    do
+    {
+        nextIdx = (centerLineIdx + offset++) % size;
+        targetPoint[0] = trajectory->points[nextIdx].x;
+        targetPoint[1] = trajectory->points[nextIdx].y;
+    } while (cv::norm(m_rearWheelsPos - targetPoint) < m_lookAheadDist);
+
+    VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
+    return targetPoint;
 }
 
-void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const sgtdv_msgs::Point2D &targetPoint)
+void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint)
 {
     const double theta = msg.carPose->yaw;
-    const double alpha = std::atan2((targetPoint.y - msg.carPose->position.y),(targetPoint.x - msg.carPose->position.x)) - theta;
-    const double lookAheadDist = std::hypot((targetPoint.y - msg.carPose->position.y), (targetPoint.x - msg.carPose->position.x));
-    const double steeringAngleAct = m_control.steeringAngle;
-    const double steeringAngleWish = std::atan2(2*std::sin(alpha)*m_carLength,lookAheadDist);
-    const double steeringAngleError = steeringAngleWish - steeringAngleAct;
-    
-    m_control.steeringAngle = static_cast<float>(m_steeringP * steeringAngleError);
+    const double alpha = std::atan2((targetPoint[1] - msg.carPose->position.y),(targetPoint[0] - msg.carPose->position.x)) - theta;
+    m_control.steeringAngle = static_cast<float>(std::atan2(2*std::sin(alpha)*m_carLength,m_lookAheadDist));
 
     // saturation
     if (m_control.steeringAngle > m_steeringMax)
