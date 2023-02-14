@@ -1,4 +1,4 @@
-ref_speed: 4
+ref_speed: 6
 const_yaw_rate: 10.0
 closest_point_treshold: 0.2
 control_gain: 1.0
@@ -12,7 +12,7 @@ front_wheels_offset: 0.811
 controller:
   speed:
     p: 10       
-    i: 0.02    
+    i: 0.015   
     max: 100
     min: 0 
   steering:

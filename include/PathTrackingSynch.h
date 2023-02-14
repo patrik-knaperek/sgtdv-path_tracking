@@ -22,11 +22,8 @@ public:
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
     void DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg);
     void Do();
-    //void VelocityEstimate(PathTrackingMsg &msg, const sgtdv_msgs::CarPosePtr &poseDelta, double &timeDelta);
 
 private:
-    //void SetLastPose(const sgtdv_msgs::CarPose::ConstPtr &msg);
-
     PathTracking m_pathTracking;
     PathTrackingMsg m_pathTrackingMsg;
 

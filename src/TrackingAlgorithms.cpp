@@ -116,25 +116,43 @@ void TrackingAlgorithm::VisualizePoint(cv::Vec2f point, int p_id, cv::Vec3f colo
 
 void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
 {
+    static float speedCmdAct = 0.f;
+    static float speedCmdPrev = 0.f;
     // regulation error
     const double speedError = m_refSpeed - actSpeed;
-    if (m_ramp < 1)
-    {
-        m_ramp += 1.f/512.f;
-    }
 
     // proportional
-    m_control.speed = static_cast<uint8_t>(m_ramp * m_speedP * speedError);
+    speedCmdAct = m_speedP * speedError;
 
     // integral
+    static double integralSpeed = 0.0;
     if (m_speedI)
     {
         if (m_control.speed < m_speedMax)   // Anti-windup
         {
-        m_integralSpeed += speedError * TIME_PER_FRAME;
+        integralSpeed += speedError * TIME_PER_FRAME;
         }
-        m_control.speed += static_cast<uint8_t>(m_ramp * m_speedI * m_integralSpeed);
+        speedCmdAct += m_speedI * integralSpeed;
     }
+
+    // ramp
+    static ros::Time lastRaise = ros::Time::now();
+
+        if (speedCmdAct - speedCmdPrev > 1.0)
+        {
+            if ((ros::Time::now() - lastRaise) - ros::Duration(1 / SPEED_RAISE_RATE) > ros::Duration(0))
+            {
+                speedCmdPrev = ++m_control.speed;
+                lastRaise = ros::Time::now();
+            } else
+            {
+                m_control.speed = speedCmdPrev;
+            }
+        } else
+        {
+            m_control.speed = static_cast<int8_t>(speedCmdAct);
+            speedCmdPrev = m_control.speed;
+        }
     
     // saturation
     if (m_control.speed > m_speedMax)

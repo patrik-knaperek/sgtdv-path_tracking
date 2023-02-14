@@ -19,6 +19,7 @@ constexpr float TIME_PER_FRAME = 1.f / FPS;
 #define rad2deg(x) (x*180.f/M_PI)
 #define LOOK_AHEAD_MIN 2
 #define LOOK_AHEAD_MAX 6
+#define SPEED_RAISE_RATE 20.f
 
 class TrackingAlgorithm
 {
@@ -34,10 +35,6 @@ protected:
     ros::Publisher m_targetPub;
     ros::NodeHandle m_handle;
     Control m_control;
-    
-    double m_ramp = 0;
-    double m_integralSpeed = 0;
-    double m_previousSpeedError = 0;
 
     // parameters
     float m_carLength;
