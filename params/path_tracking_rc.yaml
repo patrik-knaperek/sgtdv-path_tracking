@@ -1,0 +1,20 @@
+ref_speed: 2
+closest_point_treshold: 0.2
+control_gain: 1.0
+
+# car parameters
+car_length: 0.25
+rear_wheels_offset: 0.125
+front_wheels_offset: 0.125
+
+# controller parameters
+controller:
+  speed:
+    p: 10       
+    i: 0.02    
+    max: 100
+    min: 0 
+  steering:
+    k: 0.8
+    max: 1
+    min: -1

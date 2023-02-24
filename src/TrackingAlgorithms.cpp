@@ -294,8 +294,7 @@ void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPo
 
 float PurePursuit::ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel)
 {
-    float temp = m_steeringK * carVel->speed;
-    
+    const float temp = m_steeringK * carVel->speed;
     if (temp < LOOK_AHEAD_MIN)
     {
         return LOOK_AHEAD_MIN;

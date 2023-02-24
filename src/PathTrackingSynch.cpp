@@ -9,7 +9,7 @@
 PathTrackingSynch::PathTrackingSynch(ros::NodeHandle &handle) :
     m_pathTracking(handle)
 {
-    
+    m_trajectoryReady = m_poseReady = m_velocityReady = false;
 }
 
 PathTrackingSynch::~PathTrackingSynch()
@@ -32,11 +32,13 @@ void PathTrackingSynch::DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstP
 void PathTrackingSynch::DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg)
 {
     m_pathTrackingMsg.carPose = msg;
+    m_poseReady = true;
 }
 
 void PathTrackingSynch::DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg)
 {
     m_pathTrackingMsg.carVel = msg;
+    m_velocityReady = true;
 }
 
 void PathTrackingSynch::Do()
@@ -45,7 +47,7 @@ void PathTrackingSynch::Do()
     {        
         ros::spinOnce();
 
-        if(!m_trajectoryReady) continue;
+        if(!m_trajectoryReady || !m_poseReady || !m_velocityReady) continue;
         
         auto start = std::chrono::steady_clock::now();
 

@@ -1,5 +1,4 @@
 const_speed: 6.0
-const_yaw_rate: 10.0
 closest_point_treshold: 0.2
 control_gain: 1.0
 

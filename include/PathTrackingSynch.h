@@ -27,7 +27,9 @@ private:
     PathTracking m_pathTracking;
     PathTrackingMsg m_pathTrackingMsg;
 
-    bool m_trajectoryReady = false;
+    bool m_trajectoryReady;
+    bool m_poseReady;
+    bool m_velocityReady;
     sgtdv_msgs::CarPose m_lastPose;
 
     // parameters
