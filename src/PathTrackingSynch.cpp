@@ -25,7 +25,7 @@ void PathTrackingSynch::SetPublishers(ros::Publisher cmdPub, ros::Publisher targ
 void PathTrackingSynch::DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
 {
     m_pathTrackingMsg.trajectory = msg;
-    m_pathTracking.FreshTrajectory();
+    //m_pathTracking.FreshTrajectory();
     m_trajectoryReady = true;
 }
 

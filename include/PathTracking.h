@@ -3,7 +3,6 @@
 //Authors: Juraj Krasňanský
 /*****************************************************/
 
-
 #include <ros/ros.h>
 #include <chrono>
 #include <sgtdv_msgs/PathTrackingMsg.h>
@@ -17,9 +16,10 @@ public:
     PathTracking(ros::NodeHandle &handle);
     ~PathTracking();
 
+    void LoadParams(ros::NodeHandle &handle);
     void SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub);
     void Do(const PathTrackingMsg &msg);
-    void FreshTrajectory();
+    //void FreshTrajectory();
     
 private:
     ros::Publisher m_publisher;

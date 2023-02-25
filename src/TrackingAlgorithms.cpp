@@ -6,13 +6,11 @@
 
 #include "../include/TrackingAlgorithms.h"
 
-TrackingAlgorithm::TrackingAlgorithm(ros::NodeHandle &handle) :
-    m_handle(handle)
+TrackingAlgorithm::TrackingAlgorithm(ros::NodeHandle &handle)
 {
-    m_coneIndexOffset = 0;
+    //m_coneIndexOffset = 0;
     m_control.speed = 0;
     m_control.steeringAngle = 0;
-    LoadParams();
 }
 
 TrackingAlgorithm::~TrackingAlgorithm()
@@ -20,79 +18,40 @@ TrackingAlgorithm::~TrackingAlgorithm()
 
 }
 
-void TrackingAlgorithm::LoadParams()
+void TrackingAlgorithm::SetParams(const Params &params)
 {
-    // load parameters
-    float carLength, rearWheelsOffset, frontWheelsOffset, closestPointTreshold, controlGain, refSpeed;
-    std::cout << "LOADING PARAMETERS" << std::endl;
-    if(!m_handle.getParam("/car_length", carLength))
-        ROS_ERROR("Failed to get parameter \"/car_length\" from server\n");
-    if(!m_handle.getParam("/rear_wheels_offset", rearWheelsOffset))
-        ROS_ERROR("Failed to get parameter \"/rear_wheels_offset\" from server\n");
-    if(!m_handle.getParam("/front_wheels_offset", frontWheelsOffset))
-        ROS_ERROR("Failed to get parameter \"/front_wheels_offset\" from server\n");
-    if(!m_handle.getParam("/closest_point_treshold", closestPointTreshold))
-        ROS_ERROR("Failed to get parameter \"/closest_point_treshold\" from server\n");
-    if(!m_handle.getParam("/control_gain", controlGain))
-        ROS_ERROR("Failed to get parameter \"/control_gain\" from server\n");
-    if(!m_handle.getParam("/ref_speed", refSpeed))
-        ROS_ERROR("Failed to get parameter \"/const_speed\" from server\n");
-    this->SetParams(carLength, rearWheelsOffset, frontWheelsOffset, closestPointTreshold, controlGain, refSpeed);
+    m_carLength = params.carLength;
+    m_rearWheelsOffset = params.rearWheelsOffset;
+    m_frontWheelsOffset = params.frontWheelsOffset;
 
-    // load controller parameters
-    float speedP, speedI, speedMax, speedMin, steerK, steerMax, steerMin;
-    if(!m_handle.getParam("controller/speed/p", speedP))
-        ROS_ERROR("Failed to get parameter \"/controller/speed/p\" from server\n");
-    if(!m_handle.getParam("controller/speed/i", speedI))
-        ROS_ERROR("Failed to get parameter \"/controller/speed/i\" from server\n");
-    if(!m_handle.getParam("controller/speed/max", speedMax))
-        ROS_ERROR("Failed to get parameter \"/controller/speed/max\" from server\n");
-    if(!m_handle.getParam("controller/speed/min", speedMin))
-        ROS_ERROR("Failed to get parameter \"/controller/speed/min\" from server\n");
-    if(!m_handle.getParam("controller/steering/k", steerK))
-        ROS_ERROR("Failed to get parameter \"/controller/steering/k\" from server\n");
-    if(!m_handle.getParam("controller/steering/max", steerMax))
-        ROS_ERROR("Failed to get parameter \"/controller/steering/max\" from server\n");
-    if(!m_handle.getParam("controller/steering/min", steerMin))
-        ROS_ERROR("Failed to get parameter \"/controller/steering/min\" from server\n");
-    this->SetControllerParams(speedP, speedI, static_cast<int8_t>(speedMax), static_cast<int8_t>(speedMin),
-                             steerK, steerMax, steerMin);
+    m_refSpeed = params.refSpeed;
+    m_speedP = params.speedP;
+    m_speedI = params.speedI;
+    m_speedRange.reserve(2);
+    m_speedRange.push_back(static_cast<int8_t>(params.speedMin));
+    m_speedRange.push_back(static_cast<int8_t>(params.speedMax));
+    m_speedRaiseRate = params.speedRaiseRate;
+
+    m_steeringK = params.steeringK;
+    m_steeringRange.reserve(2);
+    m_steeringRange.push_back(params.steeringMin);
+    m_steeringRange.push_back(params.steeringMax);
+    m_lookAheadDistRange.reserve(2);
+    m_lookAheadDistRange.push_back(params.lookAheadDistMin);
+    m_lookAheadDistRange.push_back(params.lookAheadDistMax);
 }
 
-void TrackingAlgorithm::FreshTrajectory()
+/*void TrackingAlgorithm::FreshTrajectory()
 {
     m_coneIndexOffset = 0;
-}
+}*/
 
 void TrackingAlgorithm::SetPublisher(ros::Publisher targetPub)
 {
     m_targetPub = targetPub;
 }
 
-void TrackingAlgorithm::SetParams(float carLength, float rearWheelsOffset, float frontWheelsOffset, float closestPointTreshold, float controlGain, float refSpeed)
-{
-    m_carLength = carLength;
-    m_rearWheelsOffset = rearWheelsOffset;
-    m_frontWheelsOffset = frontWheelsOffset;
-    m_lookAheadDist = closestPointTreshold;
-    m_controlGain = controlGain;
-    m_refSpeed = refSpeed;
-}
-
-void TrackingAlgorithm::SetControllerParams(float speedP, float speedI, int8_t speedMax, int8_t speedMin,
-                                            float steerK, float steerMax, float steerMin)
-{
-    m_speedP = speedP;
-    m_speedI = speedI;
-    m_speedMax = speedMax;
-    m_speedMin = speedMin;
-
-    m_steeringK = steerK;
-    m_steeringMax = steerMax;
-    m_steeringMin = steerMin;
-}
-
-void TrackingAlgorithm::VisualizePoint(cv::Vec2f point, int p_id, cv::Vec3f color)
+void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, const cv::Vec3f color) const
 {
     visualization_msgs::Marker marker;
     
@@ -128,7 +87,7 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
     static double integralSpeed = 0.0;
     if (m_speedI)
     {
-        if (m_control.speed < m_speedMax)   // Anti-windup
+        if (m_control.speed < m_speedRange[1])   // Anti-windup
         {
         integralSpeed += speedError * TIME_PER_FRAME;
         }
@@ -140,7 +99,7 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
 
         if (speedCmdAct - speedCmdPrev > 1.0)
         {
-            if ((ros::Time::now() - lastRaise) - ros::Duration(1 / SPEED_RAISE_RATE) > ros::Duration(0))
+            if ((ros::Time::now() - lastRaise) - ros::Duration(1 / m_speedRaiseRate) > ros::Duration(0))
             {
                 speedCmdPrev = ++m_control.speed;
                 lastRaise = ros::Time::now();
@@ -155,16 +114,16 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
         }
     
     // saturation
-    if (m_control.speed > m_speedMax)
+    if (m_control.speed > m_speedRange[1])
     {
-        m_control.speed = m_speedMax;
-    } else if (m_control.speed < m_speedMin)
+        m_control.speed = m_speedRange[1];
+    } else if (m_control.speed < m_speedRange[0])
     {
-        m_control.speed = m_speedMin;
+        m_control.speed = m_speedRange[0];
     }
 }
 
-Stanley::Stanley(ros::NodeHandle &handle) :
+/*Stanley::Stanley(ros::NodeHandle &handle) :
     TrackingAlgorithm(handle)
 {
 
@@ -198,12 +157,12 @@ Control Stanley::Do(const PathTrackingMsg &msg)
 
     m_control.steeringAngle = ControlCommand(msg.carVel->speed);
     // saturation
-    if (m_control.steeringAngle > m_steeringMax)
+    if (m_control.steeringAngle > m_speedRange[1])
     {
-        m_control.steeringAngle = m_steeringMax;
-    } else if (m_control.steeringAngle < m_steeringMin)
+        m_control.steeringAngle = m_speedRange[1];
+    } else if (m_control.steeringAngle < m_speedRange[0])
     {
-        m_control.steeringAngle = m_steeringMin;
+        m_control.steeringAngle = m_speedRange[0];
     }
 
     this->ComputeSpeedCommand(msg.carVel->speed);
@@ -260,7 +219,7 @@ float Stanley::SpeedGain(float speed) const
 float Stanley::ControlCommand(float speed) const
 {
     return m_thetaDelta * SpeedGain(speed);
-}
+}*/
 
 PurePursuit::PurePursuit(ros::NodeHandle &handle) :
     TrackingAlgorithm(handle)
@@ -277,7 +236,7 @@ Control PurePursuit::Do(const PathTrackingMsg &msg)
 {    
     ComputeRearWheelPos(msg.carPose);
     m_lookAheadDist = ComputeLookAheadDist(msg.carVel);
-    cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
+    const cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
     this->VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
     this->ComputeSteeringCommand(msg, targetPoint);
     this->ComputeSpeedCommand(msg.carVel->speed);
@@ -295,12 +254,12 @@ void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPo
 float PurePursuit::ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel)
 {
     const float temp = m_steeringK * carVel->speed;
-    if (temp < LOOK_AHEAD_MIN)
+    if (temp < m_lookAheadDistRange[0])
     {
-        return LOOK_AHEAD_MIN;
-    } else if (temp > LOOK_AHEAD_MAX)
+        return m_lookAheadDistRange[0];
+    } else if (temp > m_lookAheadDistRange[1])
     {
-        return LOOK_AHEAD_MAX;
+        return m_lookAheadDistRange[1];
     } else
     {
         return temp;
@@ -345,11 +304,11 @@ void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::V
     m_control.steeringAngle = static_cast<float>(std::atan2(2*std::sin(alpha)*m_carLength,m_lookAheadDist));
 
     // saturation
-    if (m_control.steeringAngle > m_steeringMax)
+    if (m_control.steeringAngle > m_steeringRange[1])
     {
-        m_control.steeringAngle = m_steeringMax;
-    } else if (m_control.steeringAngle < m_steeringMin)
+        m_control.steeringAngle = m_steeringRange[1];
+    } else if (m_control.steeringAngle < m_steeringRange[0])
     {
-        m_control.steeringAngle = m_steeringMin;
+        m_control.steeringAngle = m_steeringRange[0];
     }
 }
