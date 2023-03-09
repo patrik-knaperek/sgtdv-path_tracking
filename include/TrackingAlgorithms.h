@@ -32,21 +32,22 @@ protected:
     ros::Publisher m_targetPub;
     Control m_control;
 
-    // vehicle parameters
+    /* vehicle parameters */
     float m_carLength;
     float m_rearWheelsOffset;
     float m_frontWheelsOffset;
 
-    // controller parameters
+    /* controller parameters */
     float m_refSpeed;
     float m_speedP;
     float m_speedI;
     std::vector<int8_t> m_speedRange;
     float m_speedRaiseRate;
-
     float m_steeringK;
     std::vector<float> m_steeringRange;
     std::vector<float> m_lookAheadDistRange;
+
+    bool m_trackLoop;
     
 public:
     virtual Control Do(const PathTrackingMsg &msg) = 0;

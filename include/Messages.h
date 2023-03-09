@@ -39,4 +39,6 @@ struct Params
     float steeringMax;
     float lookAheadDistMin;
     float lookAheadDistMax;
+
+    bool trackLoop;
 };

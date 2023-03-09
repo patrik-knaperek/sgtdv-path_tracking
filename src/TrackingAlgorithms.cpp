@@ -11,6 +11,7 @@ TrackingAlgorithm::TrackingAlgorithm(ros::NodeHandle &handle)
     //m_coneIndexOffset = 0;
     m_control.speed = 0;
     m_control.steeringAngle = 0;
+    m_trackLoop = true;
 }
 
 TrackingAlgorithm::~TrackingAlgorithm()
@@ -39,6 +40,8 @@ void TrackingAlgorithm::SetParams(const Params &params)
     m_lookAheadDistRange.reserve(2);
     m_lookAheadDistRange.push_back(params.lookAheadDistMin);
     m_lookAheadDistRange.push_back(params.lookAheadDistMax);
+
+    m_trackLoop = params.trackLoop;
 }
 
 /*void TrackingAlgorithm::FreshTrajectory()
@@ -239,7 +242,14 @@ Control PurePursuit::Do(const PathTrackingMsg &msg)
     const cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
     this->VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
     this->ComputeSteeringCommand(msg, targetPoint);
-    this->ComputeSpeedCommand(msg.carVel->speed);
+    
+    if (!m_trackLoop && cv::norm(targetPoint - cv::Vec2f(msg.carPose->position.x, msg.carPose->position.y)) < 0.1)
+    {
+        std::cout << "REACHED TARGET, TERMINATING" << std::endl;
+        ros::shutdown();
+    } else{
+        this->ComputeSpeedCommand(msg.carVel->speed);
+    }
 
     return m_control;
 }
@@ -288,7 +298,13 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     offset = 0;
     do
     {
-        nextIdx = (centerLineIdx + offset++) % size;
+        if (!m_trackLoop)
+        {
+            nextIdx = (centerLineIdx + offset++);
+            if (nextIdx > size - 1) break;
+        } else {
+            nextIdx = (centerLineIdx + offset++) % size;
+        }
         targetPoint[0] = trajectory->points[nextIdx].x;
         targetPoint[1] = trajectory->points[nextIdx].y;
     } while (cv::norm(m_rearWheelsPos - targetPoint) < m_lookAheadDist);

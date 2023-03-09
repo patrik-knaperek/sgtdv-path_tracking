@@ -53,6 +53,8 @@ void PathTracking::LoadParams(ros::NodeHandle &handle)
         ROS_ERROR("Failed to get parameter \"/controller/steering/lookahead_dist_min\" from server\n");
     if(!handle.getParam("/controller/steering/lookahead_dist_max", params.lookAheadDistMax))
         ROS_ERROR("Failed to get parameter \"/controller/steering/lookahead_dist_max\" from server\n");
+    if(!handle.getParam("/track_loop", params.trackLoop))
+        ROS_ERROR("Failed to get parameter \"/track_loop\" from server\n");
     m_algorithm->SetParams(params);
 }
 
