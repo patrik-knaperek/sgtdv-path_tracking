@@ -23,10 +23,12 @@ struct Control
 
 struct Params
 {
+    /* vehicle parameters */
     float carLength;
     float rearWheelsOffset;
     float frontWheelsOffset;
 
+    /* speed controller parameters */
     float refSpeed;
     float speedP;
     float speedI;
@@ -34,9 +36,12 @@ struct Params
     float speedMax;
     float speedRaiseRate;
 
+    /* steering control parameters*/
     float steeringK;
     float steeringMin;
     float steeringMax;
     float lookAheadDistMin;
     float lookAheadDistMax;
+
+    bool trackLoop;
 };

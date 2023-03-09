@@ -6,26 +6,18 @@
 
 #include "../include/PathTrackingSynch.h"
 
-PathTrackingSynch::PathTrackingSynch(ros::NodeHandle &handle) :
-    m_pathTracking(handle)
+PathTrackingSynch::PathTrackingSynch(const ros::NodeHandle &handle) :
+      m_pathTracking(handle)
+    , m_trajectoryReady(false)
+    , m_poseReady(false)
+    , m_velocityReady(false)
 {
-    m_trajectoryReady = m_poseReady = m_velocityReady = false;
-}
-
-PathTrackingSynch::~PathTrackingSynch()
-{
-
-}
-
-void PathTrackingSynch::SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub)
-{
-    m_pathTracking.SetPublishers(cmdPub, targetPub);
+    
 }
 
 void PathTrackingSynch::DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
 {
     m_pathTrackingMsg.trajectory = msg;
-    //m_pathTracking.FreshTrajectory();
     m_trajectoryReady = true;
 }
 
@@ -39,6 +31,15 @@ void PathTrackingSynch::DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &m
 {
     m_pathTrackingMsg.carVel = msg;
     m_velocityReady = true;
+}
+
+void PathTrackingSynch::StopCallback(const std_msgs::Empty::ConstPtr &msg)
+{
+    m_pathTracking.StopVehicle();
+}
+void PathTrackingSynch::StartCallback(const std_msgs::Empty::ConstPtr &msg)
+{
+    m_pathTracking.StartVehicle();
 }
 
 void PathTrackingSynch::Do()
