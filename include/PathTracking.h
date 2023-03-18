@@ -9,6 +9,7 @@
 #include "../include/Messages.h"
 #include "../include/TrackingAlgorithms.h"
 #include <sgtdv_msgs/Control.h>
+#include <geometry_msgs/PoseStamped.h>
 
 class PathTracking
 {

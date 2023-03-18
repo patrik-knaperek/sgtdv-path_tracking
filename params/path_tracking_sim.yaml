@@ -18,4 +18,4 @@ controller:
     lookahead_dist_min: 2
     lookahead_dist_max: 6
 
-track_loop: false
+track_loop: true
