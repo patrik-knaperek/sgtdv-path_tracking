@@ -5,6 +5,7 @@
 
 
 #include <ros/ros.h>
+#include <std_msgs/Empty.h>
 #include "../include/PathTracking.h"
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
@@ -14,13 +15,24 @@
 class PathTrackingSynch
 {
 public:
-    PathTrackingSynch(ros::NodeHandle &handle);
-    ~PathTrackingSynch();
+    PathTrackingSynch(const ros::NodeHandle &handle);
+    ~PathTrackingSynch() = default;
 
-    void SetPublishers(ros::Publisher cmdPub, ros::Publisher targetPub);
+    void SetCmdPublisher(const ros::Publisher &cmdPub)
+    {
+        m_pathTracking.SetCmdPublisher(cmdPub);
+    };        
+    
+    void SetVisualizationPublishers(const ros::Publisher &targetPub, const ros::Publisher &steeringPosePub)
+    {
+        m_pathTracking.SetVisualizationPublishers(targetPub, steeringPosePub);
+    };
+    
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
     void DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg);
+    void StopCallback(const std_msgs::Empty &msg);
+    void StartCallback(const std_msgs::Empty &msg);
     void Do();
 
 private:

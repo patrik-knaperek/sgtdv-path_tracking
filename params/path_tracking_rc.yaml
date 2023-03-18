@@ -1,7 +1,7 @@
 vehicle:
-  car_length: 0.25
-  rear_wheels_offset: 0.125
-  front_wheels_offset: 0.125
+  car_length: 0.36
+  rear_wheels_offset: 0.08
+  front_wheels_offset: 0.28
 
 controller:
   speed:
@@ -9,7 +9,7 @@ controller:
     i: 0.02
     min: 0
     max: 100 
-    ref_speed: 2
+    ref_speed: 1.0
     speed_raise_rate: 20
   steering:
     k: 0.8

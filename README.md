@@ -10,9 +10,11 @@ ___
 
 ___
 
-[Pure Pursuit](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link) steering control algorithm is implemented and tested with FSSIM. Stanley algorithm implementation is not working. For speed control, a simple discrete PI regulator with ramp is implemented. Constant reference speed is given as a parameter. Tested on global navigation and feedback from FSSIM. Can control vehicle in FSSIM as well as RC car.
+[Pure Pursuit](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link) steering control algorithm is implemented. Stanley algorithm implementation is not working. For speed control, a simple discrete PI regulator with ramp is implemented. Constant reference speed is given as a parameter. Tested with FSSIM and RC car.
 
 ### Related packages
+* `path_planning`
+* `ptp_trajectory`
 * `path_tracking_sim_interface`
 * `racecar-interface`
 * `jetson_can_interface`
@@ -58,4 +60,4 @@ $ ./start.bash
     - `controller/speed/ref_speed` : constant reference speed
     - `controller/speed/speed_raise_rate` : maximum frequency of speed control output increment
     - `controller/steering/k` : ref. to the equation in the [Section 2.2.1](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link)
-    - `controller/steering/lookahead_dist_min`,  `controller/steering/lookahead_dist_min`: range of look-ahead distance, ref. to [Figure 10](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link)
+    - `controller/steering/lookahead_dist_min`,  `controller/steering/lookahead_dist_max`: range of look-ahead distance, ref. to [Figure 10](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link)
