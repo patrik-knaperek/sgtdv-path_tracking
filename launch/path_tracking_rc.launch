@@ -3,8 +3,4 @@
     <rosparam command="load" file="$(find path_tracking)/params/path_tracking_rc.yaml"/>
 	<node pkg="path_tracking" type="path_tracking" name="pathTracking" output="screen"/>
     <node pkg="ptp_trajectory" type="ptp_trajectory" name="PTPtrajectory" output="screen"/>
-
-    <node pkg="rviz" type="rviz" name="pathTracking_rviz"  respawn="false"
-        args="-d $(find path_tracking)/rviz/path_tracking.rviz" output="screen">
-    </node>
 </launch>
