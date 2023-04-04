@@ -9,7 +9,7 @@ controller:
     i: 0.015   
     min: 0
     max: 100 
-    ref_speed: 5
+    ref_speed: 6
     speed_raise_rate: 20
   steering:
     k: 0.8

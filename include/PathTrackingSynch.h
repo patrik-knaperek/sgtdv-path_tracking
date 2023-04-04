@@ -31,8 +31,8 @@ public:
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
     void DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg);
-    void StopCallback(const std_msgs::Empty &msg);
-    void StartCallback(const std_msgs::Empty &msg);
+    void StopCallback(const std_msgs::Empty::ConstPtr &msg);
+    void StartCallback(const std_msgs::Empty::ConstPtr &msg);
     void Do();
 
 private:

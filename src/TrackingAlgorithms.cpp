@@ -26,6 +26,7 @@ void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, co
     marker.type                 = visualization_msgs::Marker::SPHERE;
     marker.action               = visualization_msgs::Marker::ADD;
     marker.id                   = p_id;
+    marker.ns                   = std::to_string(p_id);
     marker.scale.x              = 0.5;
     marker.scale.y              = 0.5;
     marker.scale.z              = 0.5;
@@ -206,7 +207,7 @@ Control PurePursuit::Do(const PathTrackingMsg &msg)
     ComputeRearWheelPos(msg.carPose);
     ComputeLookAheadDist(msg.carVel);
     const cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
-    VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
+    //VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
     ComputeSteeringCommand(msg, targetPoint);
     ComputeSpeedCommand(msg.carVel->speed);
     ComputeSpeedCommand(msg.carVel->speed);
@@ -219,7 +220,7 @@ void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPo
 {
     const cv::Vec2f pos(carPose->position.x, carPose->position.y);
     m_rearWheelsPos = pos - cv::Vec2f(cosf(carPose->yaw), sinf(carPose->yaw)) * m_params.rearWheelsOffset;
-    //VisualizePoint(m_rearWheelsPos, 2, cv::Vec3f(0.0, 0.0, 1.0));
+    VisualizePoint(m_rearWheelsPos, 1, cv::Vec3f(0.0, 0.0, 1.0));
 }
 
 void PurePursuit::ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel)
@@ -271,6 +272,7 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     } while (cv::norm(m_rearWheelsPos - targetPoint) < m_lookAheadDist);
 
     VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
+    VisualizePoint(cv::Vec2f(trajectory->points[centerLineIdx].x, trajectory->points[centerLineIdx].y), 2, cv::Vec3f(1.0, 1.0, 0.0));
     return targetPoint;
 }
 

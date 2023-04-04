@@ -36,7 +36,8 @@ void PathTracking::LoadParams(const ros::NodeHandle &handle) const
     params.lookAheadDistMin = GetParam(handle, "/controller/steering/lookahead_dist_min");
     params.lookAheadDistMax = GetParam(handle, "/controller/steering/lookahead_dist_max");
     
-    params.trackLoop = static_cast<bool>(GetParam(handle, "/track_loop"));
+    //params.trackLoop = static_cast<bool>(GetParam(handle, "/track_loop"));
+    params.trackLoop = true;
     
     m_algorithm->SetParams(params);
 }
@@ -52,16 +53,19 @@ float PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &n
 void PathTracking::StopVehicle()
 {
     m_stopped = true;
+    ROS_INFO("STOPPING VEHICLE");
 }
 
 void PathTracking::StartVehicle()
 {
     m_stopped = false;
+    ROS_INFO("STARTING VEHICLE");
 }
 
 void PathTracking::Do(const PathTrackingMsg &msg)
 {
-    sgtdv_msgs::ControlPtr controlMsg(new sgtdv_msgs::Control);
+    //sgtdv_msgs::ControlPtr controlMsg(new sgtdv_msgs::Control);
+    boost::shared_ptr<sgtdv_msgs::Control> controlMsg = boost::make_shared<sgtdv_msgs::Control>();
     if (m_stopped)
     {
         controlMsg->speed = 0.0;

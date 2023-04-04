@@ -33,11 +33,11 @@ void PathTrackingSynch::DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &m
     m_velocityReady = true;
 }
 
-void PathTrackingSynch::StopCallback(const std_msgs::Empty &msg)
+void PathTrackingSynch::StopCallback(const std_msgs::Empty::ConstPtr &msg)
 {
     m_pathTracking.StopVehicle();
 }
-void PathTrackingSynch::StartCallback(const std_msgs::Empty &msg)
+void PathTrackingSynch::StartCallback(const std_msgs::Empty::ConstPtr &msg)
 {
     m_pathTracking.StartVehicle();
 }
