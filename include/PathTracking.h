@@ -37,6 +37,4 @@ private:
     ros::Publisher m_cmdPublisher;
     TrackingAlgorithm *m_algorithm;
     bool m_stopped;
-
-    void HandleAlgorithmResult(sgtdv_msgs::ControlPtr &msg, const Control &result);
 };

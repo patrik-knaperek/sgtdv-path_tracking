@@ -48,10 +48,16 @@ void TrackingAlgorithm::VisualizeSteering() const
     m_steeringPosePub.publish(steeringPose);
 }
 
-void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
+int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev)
 {
     static float speedCmdAct = 0.f;
-    static float speedCmdPrev = 0.f;
+    static double integralSpeed = 0.0;
+    static ros::Time lastRaise = ros::Time::now();
+    if (speedCmdPrev == 0)
+    {
+        integralSpeed = 0.;
+    }
+
     // regulation error
     const double speedError = m_params.refSpeed - actSpeed;
 
@@ -59,43 +65,40 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
     speedCmdAct = m_params.speedP * speedError;
 
     // integral
-    static double integralSpeed = 0.0;
     if (m_params.speedI)
     {
         if (m_control.speed < m_params.speedMax)   // Anti-windup
         {
-        integralSpeed += speedError * TIME_PER_FRAME;
+            integralSpeed += speedError * TIME_PER_FRAME;
         }
         speedCmdAct += m_params.speedI * integralSpeed;
     }
 
     // ramp
-    static ros::Time lastRaise = ros::Time::now();
-
-        if (speedCmdAct - speedCmdPrev > 1.0)
+    if (speedCmdAct - speedCmdPrev > 1.0)
+    {
+        if ((ros::Time::now() - lastRaise) > ros::Duration(1 / m_params.speedRaiseRate))
         {
-            if ((ros::Time::now() - lastRaise) - ros::Duration(1 / m_params.speedRaiseRate) > ros::Duration(0))
-            {
-                speedCmdPrev = ++m_control.speed;
-                lastRaise = ros::Time::now();
-            } else
-            {
-                m_control.speed = speedCmdPrev;
-            }
+            speedCmdAct++;
+            lastRaise = ros::Time::now();
         } else
         {
-            m_control.speed = static_cast<int8_t>(speedCmdAct);
-            speedCmdPrev = m_control.speed;
+            speedCmdAct = speedCmdPrev;
+	    ROS_INFO_STREAM("prev speed cmd: " << (int) speedCmdPrev);
+
         }
+    }
     
     // saturation
-    if (m_control.speed > m_params.speedMax)
+    if (speedCmdAct > m_params.speedMax)
     {
-        m_control.speed = m_params.speedMax;
-    } else if (m_control.speed < m_params.speedMin)
+       speedCmdAct = m_params.speedMax;
+    } else if (speedCmdAct < m_params.speedMin)
     {
-        m_control.speed = m_params.speedMin;
+        speedCmdAct = m_params.speedMin;
     }
+
+    return static_cast<int8_t>(speedCmdAct);
 }
 
 /*Stanley::Stanley(ros::NodeHandle &handle) :
@@ -202,18 +205,14 @@ PurePursuit::PurePursuit(const ros::NodeHandle &handle) :
 
 }
 
-Control PurePursuit::Do(const PathTrackingMsg &msg)
+void PurePursuit::Do(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &controlMsg)
 {    
     ComputeRearWheelPos(msg.carPose);
     ComputeLookAheadDist(msg.carVel);
     const cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
-    //VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
-    ComputeSteeringCommand(msg, targetPoint);
-    ComputeSpeedCommand(msg.carVel->speed);
-    ComputeSpeedCommand(msg.carVel->speed);
-    ComputeSpeedCommand(msg.carVel->speed);
-
-    return m_control;
+    VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
+    controlMsg->steeringAngle = ComputeSteeringCommand(msg, targetPoint); 
+    controlMsg->speed = ComputeSpeedCommand(msg.carVel->speed, controlMsg->speed);
 }
 
 void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
@@ -276,20 +275,22 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     return targetPoint;
 }
 
-void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint)
+float PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint)
 {
+    static float steeringAngle = 0.0;
     const double theta = msg.carPose->yaw;
     const double alpha = std::atan2((targetPoint[1] - msg.carPose->position.y),(targetPoint[0] - msg.carPose->position.x)) - theta;
-    m_control.steeringAngle = static_cast<float>(std::atan2(2*std::sin(alpha)*m_params.carLength,m_lookAheadDist));
+    steeringAngle = static_cast<float>(std::atan2(2*std::sin(alpha)*m_params.carLength,m_lookAheadDist));
 
     // saturation
-    if (m_control.steeringAngle > m_params.steeringMax)
+    if (steeringAngle > m_params.steeringMax)
     {
-        m_control.steeringAngle = m_params.steeringMax;
+        steeringAngle = m_params.steeringMax;
     } else if (m_control.steeringAngle < m_params.steeringMin)
     {
-        m_control.steeringAngle = m_params.steeringMin;
+        steeringAngle = m_params.steeringMin;
     }
 
     VisualizeSteering();
+    return steeringAngle;
 }

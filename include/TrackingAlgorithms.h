@@ -11,6 +11,7 @@
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
 #include <sgtdv_msgs/CarVel.h>
+#include <sgtdv_msgs/Control.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -28,7 +29,7 @@ protected:
 
     virtual void VisualizePoint(const cv::Vec2f point, const int point_id, const cv::Vec3f color) const;
     virtual void VisualizeSteering() const;
-    virtual void ComputeSpeedCommand(const float actSpeed);
+    virtual int8_t ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev);
 
     ros::Publisher m_targetPub;
     ros::Publisher m_steeringPosePub;
@@ -36,7 +37,7 @@ protected:
     Params m_params;
 
 public:
-    virtual Control Do(const PathTrackingMsg &msg) = 0;
+    virtual void Do(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &controlMsg) = 0;
     virtual void SetParams(const Params &params)
     {
         m_params = params;
@@ -74,7 +75,7 @@ public:
     PurePursuit(const ros::NodeHandle &handle);
     ~PurePursuit() = default;
 
-    virtual Control Do(const PathTrackingMsg &msg);
+    void Do(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &controlMsg) override;
 
 private:
     cv::Vec2f m_rearWheelsPos;
@@ -83,5 +84,5 @@ private:
     void ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose);
     void ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel);
     cv::Vec2f FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const;
-    void ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint);
+    float ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint);
 };

@@ -58,8 +58,11 @@ void PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &na
 
 void PathTracking::StopVehicle()
 {
-    m_stopped = true;
-    ROS_INFO("STOPPING VEHICLE");
+    if (!m_stopped)
+    {
+	    m_stopped = true;
+    	ROS_INFO("STOPPING VEHICLE");
+    }
 }
 
 void PathTracking::StartVehicle()
@@ -70,22 +73,15 @@ void PathTracking::StartVehicle()
 
 void PathTracking::Do(const PathTrackingMsg &msg)
 {
-    //sgtdv_msgs::ControlPtr controlMsg(new sgtdv_msgs::Control);
-    boost::shared_ptr<sgtdv_msgs::Control> controlMsg = boost::make_shared<sgtdv_msgs::Control>();
+    static boost::shared_ptr<sgtdv_msgs::Control> controlMsg = boost::make_shared<sgtdv_msgs::Control>();
     if (m_stopped)
     {
         controlMsg->speed = 0.0;
         controlMsg->steeringAngle = 0.0;
     } else
     {
-        HandleAlgorithmResult(controlMsg, m_algorithm->Do(msg));
+        m_algorithm->Do(msg, controlMsg);
     }
 
     m_cmdPublisher.publish(controlMsg);
-}
-
-void PathTracking::HandleAlgorithmResult(sgtdv_msgs::ControlPtr &msg, const Control &result)
-{
-    msg->speed = result.speed;
-    msg->steeringAngle = result.steeringAngle;
 }
