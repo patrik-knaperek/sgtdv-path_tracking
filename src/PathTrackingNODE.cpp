@@ -19,7 +19,8 @@ int main (int argc, char** argv)
     synchObj.SetVisualizationPublishers(targetPublisher, steeringPosePublisher);    
 
     ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 1, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
-    ros::Subscriber poseSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
+    // ros::Subscriber poseSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
+    ros::Subscriber poseSub = handle.subscribe("slam/pose", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
     ros::Subscriber velocitySub = handle.subscribe("velocity_estimate", 1, &PathTrackingSynch::DoVelocityEstimate, &synchObj);
     ros::Subscriber stopSub = handle.subscribe("stop", 1, &PathTrackingSynch::StopCallback, &synchObj);
     ros::Subscriber startSub = handle.subscribe("start", 1, &PathTrackingSynch::StartCallback, &synchObj);
