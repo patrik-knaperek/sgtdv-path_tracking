@@ -84,7 +84,6 @@ int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t
         } else
         {
             speedCmdAct = speedCmdPrev;
-	    ROS_INFO_STREAM("prev speed cmd: " << (int) speedCmdPrev);
 
         }
     }

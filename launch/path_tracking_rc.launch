@@ -7,6 +7,8 @@
 	<node pkg="tf2_ros" type="static_transform_publisher" name="camera_center_to_base_link" 
 		args="0 0 0 0 0 0 base_link camera_center" />
 
-	<node pkg="visual_odometry" type="visual_odometry" name="base_link_to_odom" output="screen"/>
+	<!--<node pkg="visual_odometry" type="visual_odometry" name="base_link_to_odom" output="screen"/>-->
 	<rosparam command="load" param="/base_frame">"base_link"</rosparam>
+
+	<include file="$(find robot_localization)/launch/ekf_rc.launch"/>
 </launch>
