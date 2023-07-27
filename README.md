@@ -20,29 +20,29 @@ ___
 * `jetson_can_interface`
 
 ## Compilation
-```
+```sh
 $ cd <path_to_SGT_workspace>/ros_implementation
 $ catkin build path_tracking
 ```
 
 ## Launch
-```
+```sh
 $ source <path_to_SGT_workspace>/ros_implementation/devel/setup.bash
 $ roslaunch path_tracking path_tracking.launch
 ```
 ### Launch with FSSIM 
 ([Requires AMZ FSD skeleton & FSSIM installed](https://gitlab.com/sgt-driverless/simulation/fsd_skeleton/-/blob/sgt-noetic-devel/SGT-DV_install_man.md))
-```
+```sh
 $ roslaunch path_tracking_sim_interface path_tracking_sim_interface
 ```
 ### Launch on RC car
-```
+```sh
 $ roslaunch path_tracking path_tracking_rc.launch
 ```
 
-In new terminal:
-```
-$ source <path_to_racecar-interface>/devel/setup.bash
+In a new terminal:
+```sh
+$ source <path_to_racecar-interface_pkg>/devel/setup.bash
 $ ./start.bash
 ```
 

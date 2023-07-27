@@ -27,7 +27,7 @@ protected:
     TrackingAlgorithm(const ros::NodeHandle &handle);
     ~TrackingAlgorithm() = default;
 
-    virtual void VisualizePoint(const cv::Vec2f point, const int point_id, const cv::Vec3f color) const;
+    virtual void VisualizePoint(const cv::Vec2f point, const int point_id, const std::string& ns, const cv::Vec3f color) const;
     virtual void VisualizeSteering() const;
     virtual int8_t ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev);
 
