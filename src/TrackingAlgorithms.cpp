@@ -12,7 +12,7 @@ TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle)
     m_control.steeringAngle = 0;
 }
 
-void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, const cv::Vec3f color) const
+void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, const std::string& ns, const cv::Vec3f color) const
 {
     visualization_msgs::Marker marker;
     
@@ -26,7 +26,7 @@ void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, co
     marker.type                 = visualization_msgs::Marker::SPHERE;
     marker.action               = visualization_msgs::Marker::ADD;
     marker.id                   = p_id;
-    marker.ns                   = std::to_string(p_id);
+    marker.ns                   = ns;
     marker.scale.x              = 0.5;
     marker.scale.y              = 0.5;
     marker.scale.z              = 0.5;
@@ -48,10 +48,16 @@ void TrackingAlgorithm::VisualizeSteering() const
     m_steeringPosePub.publish(steeringPose);
 }
 
-void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
+int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev)
 {
     static float speedCmdAct = 0.f;
-    static float speedCmdPrev = 0.f;
+    static double integralSpeed = 0.0;
+    static ros::Time lastRaise = ros::Time::now();
+    if (speedCmdPrev == 0)
+    {
+        integralSpeed = 0.;
+    }
+
     // regulation error
     const double speedError = m_params.refSpeed - actSpeed;
 
@@ -59,43 +65,39 @@ void TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed)
     speedCmdAct = m_params.speedP * speedError;
 
     // integral
-    static double integralSpeed = 0.0;
     if (m_params.speedI)
     {
         if (m_control.speed < m_params.speedMax)   // Anti-windup
         {
-        integralSpeed += speedError * TIME_PER_FRAME;
+            integralSpeed += speedError * TIME_PER_FRAME;
         }
         speedCmdAct += m_params.speedI * integralSpeed;
     }
 
     // ramp
-    static ros::Time lastRaise = ros::Time::now();
-
-        if (speedCmdAct - speedCmdPrev > 1.0)
+    if (speedCmdAct - speedCmdPrev > 1.0)
+    {
+        if ((ros::Time::now() - lastRaise) > ros::Duration(1 / m_params.speedRaiseRate))
         {
-            if ((ros::Time::now() - lastRaise) - ros::Duration(1 / m_params.speedRaiseRate) > ros::Duration(0))
-            {
-                speedCmdPrev = ++m_control.speed;
-                lastRaise = ros::Time::now();
-            } else
-            {
-                m_control.speed = speedCmdPrev;
-            }
+            speedCmdAct++;
+            lastRaise = ros::Time::now();
         } else
         {
-            m_control.speed = static_cast<int8_t>(speedCmdAct);
-            speedCmdPrev = m_control.speed;
+            speedCmdAct = speedCmdPrev;
+
         }
+    }
     
     // saturation
-    if (m_control.speed > m_params.speedMax)
+    if (speedCmdAct > m_params.speedMax)
     {
-        m_control.speed = m_params.speedMax;
-    } else if (m_control.speed < m_params.speedMin)
+       speedCmdAct = m_params.speedMax;
+    } else if (speedCmdAct < m_params.speedMin)
     {
-        m_control.speed = m_params.speedMin;
+        speedCmdAct = m_params.speedMin;
     }
+
+    return static_cast<int8_t>(speedCmdAct);
 }
 
 /*Stanley::Stanley(ros::NodeHandle &handle) :
@@ -202,25 +204,20 @@ PurePursuit::PurePursuit(const ros::NodeHandle &handle) :
 
 }
 
-Control PurePursuit::Do(const PathTrackingMsg &msg)
+void PurePursuit::Do(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &controlMsg)
 {    
     ComputeRearWheelPos(msg.carPose);
     ComputeLookAheadDist(msg.carVel);
     const cv::Vec2f targetPoint = FindTargetPoint(msg.trajectory);
-    //VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
-    ComputeSteeringCommand(msg, targetPoint);
-    ComputeSpeedCommand(msg.carVel->speed);
-    ComputeSpeedCommand(msg.carVel->speed);
-    ComputeSpeedCommand(msg.carVel->speed);
-
-    return m_control;
+    controlMsg->steeringAngle = ComputeSteeringCommand(msg, targetPoint); 
+    controlMsg->speed = ComputeSpeedCommand(msg.carVel->speed, controlMsg->speed);
 }
 
 void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
 {
     const cv::Vec2f pos(carPose->position.x, carPose->position.y);
-    m_rearWheelsPos = pos - cv::Vec2f(cosf(carPose->yaw), sinf(carPose->yaw)) * m_params.rearWheelsOffset;
-    VisualizePoint(m_rearWheelsPos, 1, cv::Vec3f(0.0, 0.0, 1.0));
+    m_rearWheelsPos = pos - cv::Vec2f(cosf(carPose->yaw) * m_params.rearWheelsOffset, sinf(carPose->yaw)  * m_params.rearWheelsOffset);
+    VisualizePoint(m_rearWheelsPos, 1, "rear wheels" , cv::Vec3f(0.0, 0.0, 1.0));
 }
 
 void PurePursuit::ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel)
@@ -254,11 +251,13 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     const auto size          = trajectory->points.size();
 
     static int offset;
-    static int nextIdx;
-    static cv::Vec2f targetPoint;
+    static int nextIdx = 0, prevIdx;
+    static cv::Vec2f targetPoint, nextPoint;
 
     offset = 0;
-    do
+    targetPoint(0) = trajectory->points[centerLineIdx].x;
+    targetPoint(1) = trajectory->points[centerLineIdx].y;
+    while (1)
     {
         if (!m_params.trackLoop)
         {
@@ -267,29 +266,63 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
         } else {
             nextIdx = (centerLineIdx + offset++) % size;
         }
-        targetPoint[0] = trajectory->points[nextIdx].x;
-        targetPoint[1] = trajectory->points[nextIdx].y;
-    } while (cv::norm(m_rearWheelsPos - targetPoint) < m_lookAheadDist);
+        nextPoint(0) = trajectory->points[nextIdx].x;
+        nextPoint(1) = trajectory->points[nextIdx].y;
 
-    VisualizePoint(targetPoint, 0, cv::Vec3f(1.0, 0.0, 0.0));
-    VisualizePoint(cv::Vec2f(trajectory->points[centerLineIdx].x, trajectory->points[centerLineIdx].y), 2, cv::Vec3f(1.0, 1.0, 0.0));
+        if (cv::norm(m_rearWheelsPos - nextPoint) < m_lookAheadDist)
+        {
+            targetPoint = nextPoint;
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    /* compute goal position exactly in look-ahead distance from the vehicle's position,
+    *  interpolated on line given by the trajectory points 
+    */
+    if (targetPoint != nextPoint)
+    {
+        const auto slopeAngle = std::atan2(
+            nextPoint(1) - targetPoint(1),
+            nextPoint(0) - targetPoint(0)
+        );
+        
+        const auto bearingVector = targetPoint - m_rearWheelsPos;
+        const auto d = cv::norm(bearingVector);
+        const auto theta = std::atan2(bearingVector(1), bearingVector(0));
+        const auto gamma = M_PI - slopeAngle + theta;
+
+        const auto x = 
+            d * cos(gamma) + sqrt(std::pow(d,2) * std::pow(cos(gamma),2) - std::pow(d,2) + std::pow(m_lookAheadDist,2));
+
+        targetPoint(0) += cos(slopeAngle) * x;
+        targetPoint(1) += sin(slopeAngle) * x;
+    }
+
+    VisualizePoint(targetPoint, 0, "target point", cv::Vec3f(1.0, 0.0, 0.0));
+    VisualizePoint(cv::Vec2f(trajectory->points[centerLineIdx].x, trajectory->points[centerLineIdx].y), 2, "closest point", cv::Vec3f(1.0, 1.0, 0.0));
     return targetPoint;
 }
 
-void PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint)
+float PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &targetPoint)
 {
+    static float steeringAngle = 0.0;
     const double theta = msg.carPose->yaw;
     const double alpha = std::atan2((targetPoint[1] - msg.carPose->position.y),(targetPoint[0] - msg.carPose->position.x)) - theta;
-    m_control.steeringAngle = static_cast<float>(std::atan2(2*std::sin(alpha)*m_params.carLength,m_lookAheadDist));
+    steeringAngle = static_cast<float>(std::atan2(2*std::sin(alpha)*m_params.carLength,m_lookAheadDist));
 
     // saturation
-    if (m_control.steeringAngle > m_params.steeringMax)
+    if (steeringAngle > m_params.steeringMax)
     {
-        m_control.steeringAngle = m_params.steeringMax;
+        steeringAngle = m_params.steeringMax;
     } else if (m_control.steeringAngle < m_params.steeringMin)
     {
-        m_control.steeringAngle = m_params.steeringMin;
+        steeringAngle = m_params.steeringMin;
     }
 
     VisualizeSteering();
+    return steeringAngle;
 }

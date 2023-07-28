@@ -1,21 +1,21 @@
 vehicle:
-  car_length: 0.36
-  rear_wheels_offset: 0.08
-  front_wheels_offset: 0.28
+  car_length: 0.335
+  rear_wheels_offset: 0.065
+  front_wheels_offset: 0.27
 
 controller:
   speed:
     p: 10       
-    i: 0.02
+    i: 0.8
     min: 0
     max: 100 
-    ref_speed: 1.0
+    ref_speed: 0.8
     speed_raise_rate: 20
   steering:
     k: 0.8
     min: -1
     max: 1
-    lookahead_dist_min: 2
-    lookahead_dist_max: 6
+    lookahead_dist_min: 0.8
+    lookahead_dist_max: 2.5
 
 track_loop: false

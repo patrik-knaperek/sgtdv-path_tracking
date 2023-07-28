@@ -19,41 +19,50 @@ void PathTracking::LoadParams(const ros::NodeHandle &handle) const
     ROS_INFO("LOADING PARAMETERS");
     Params params;
     // load vehicle parameters 
-    params.carLength = GetParam(handle, "/vehicle/car_length");
-    params.rearWheelsOffset = GetParam(handle, "/vehicle/rear_wheels_offset");
-    params.frontWheelsOffset = GetParam(handle, "/vehicle/front_wheels_offset");
+    GetParam(handle, "/vehicle/car_length", &params.carLength);
+    GetParam(handle, "/vehicle/rear_wheels_offset", &params.rearWheelsOffset);
+    GetParam(handle, "/vehicle/front_wheels_offset", &params.frontWheelsOffset);
     
     // load controller parameters
-    params.speedP = GetParam(handle, "/controller/speed/p");
-    params.speedI = GetParam(handle, "controller/speed/i");
-    params.speedMin = GetParam(handle, "/controller/speed/min");
-    params.speedMax = GetParam(handle, "/controller/speed/max");
-    params.refSpeed = GetParam(handle, "/controller/speed/ref_speed");
-    params.speedRaiseRate = GetParam(handle, "/controller/speed/speed_raise_rate");
-    params.steeringK = GetParam(handle, "/controller/steering/k");
-    params.steeringMin = GetParam(handle, "/controller/steering/min");
-    params.steeringMax = GetParam(handle, "/controller/steering/max");
-    params.lookAheadDistMin = GetParam(handle, "/controller/steering/lookahead_dist_min");
-    params.lookAheadDistMax = GetParam(handle, "/controller/steering/lookahead_dist_max");
+    GetParam(handle, "/controller/speed/p", &params.speedP);
+    GetParam(handle, "controller/speed/i", &params.speedI);
+    GetParam(handle, "/controller/speed/min", &params.speedMin);
+    GetParam(handle, "/controller/speed/max", &params.speedMax);
+    GetParam(handle, "/controller/speed/ref_speed", &params.refSpeed);
+    GetParam(handle, "/controller/speed/speed_raise_rate", &params.speedRaiseRate);
+    GetParam(handle, "/controller/steering/k", &params.steeringK);
+    GetParam(handle, "/controller/steering/min", &params.steeringMin);
+    GetParam(handle, "/controller/steering/max", &params.steeringMax);
+    GetParam(handle, "/controller/steering/lookahead_dist_min", &params.lookAheadDistMin);
+    GetParam(handle, "/controller/steering/lookahead_dist_max", &params.lookAheadDistMax);
     
-    //params.trackLoop = static_cast<bool>(GetParam(handle, "/track_loop"));
-    params.trackLoop = true;
-    
+    GetParam(handle, "/track_loop", true, &params.trackLoop);
     m_algorithm->SetParams(params);
+    
 }
 
-float PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &name) const
+template<typename T>
+void PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &name, T* storage) const
 {
-    float storage;
-    if(!handle.getParam(name, storage))
+    if (!handle.getParam(name, *storage))
         ROS_ERROR("Failed to get parameter \"%s\" from server\n", name.data());
-    return storage;
+}
+
+template<typename T> 
+void PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &name,
+                            const T &defaultValue, T* storage) const
+{
+    if (!handle.param<T>(name, *storage, defaultValue))
+        ROS_WARN_STREAM("Failed to get parameter " << name.data() << " from server, setting default: " << defaultValue);
 }
 
 void PathTracking::StopVehicle()
 {
-    m_stopped = true;
-    ROS_INFO("STOPPING VEHICLE");
+    if (!m_stopped)
+    {
+	    m_stopped = true;
+    	ROS_INFO("STOPPING VEHICLE");
+    }
 }
 
 void PathTracking::StartVehicle()
@@ -64,22 +73,15 @@ void PathTracking::StartVehicle()
 
 void PathTracking::Do(const PathTrackingMsg &msg)
 {
-    //sgtdv_msgs::ControlPtr controlMsg(new sgtdv_msgs::Control);
-    boost::shared_ptr<sgtdv_msgs::Control> controlMsg = boost::make_shared<sgtdv_msgs::Control>();
+    static boost::shared_ptr<sgtdv_msgs::Control> controlMsg = boost::make_shared<sgtdv_msgs::Control>();
     if (m_stopped)
     {
         controlMsg->speed = 0.0;
         controlMsg->steeringAngle = 0.0;
     } else
     {
-        HandleAlgorithmResult(controlMsg, m_algorithm->Do(msg));
+        m_algorithm->Do(msg, controlMsg);
     }
 
     m_cmdPublisher.publish(controlMsg);
-}
-
-void PathTracking::HandleAlgorithmResult(sgtdv_msgs::ControlPtr &msg, const Control &result)
-{
-    msg->speed = result.speed;
-    msg->steeringAngle = result.steeringAngle;
 }

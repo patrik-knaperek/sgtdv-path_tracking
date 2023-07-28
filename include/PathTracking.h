@@ -31,10 +31,10 @@ public:
     void StartVehicle();
     
 private:
-    float GetParam(const ros::NodeHandle &handle, const std::string &name) const;
+    template<typename T> void GetParam(const ros::NodeHandle &handle, const std::string &name, T* storage) const;
+    template<typename T> void GetParam(const ros::NodeHandle &handle, const std::string &name,
+                                        const T &defaultValue, T* storage) const;
     ros::Publisher m_cmdPublisher;
     TrackingAlgorithm *m_algorithm;
     bool m_stopped;
-
-    void HandleAlgorithmResult(sgtdv_msgs::ControlPtr &msg, const Control &result);
 };

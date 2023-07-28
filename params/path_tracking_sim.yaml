@@ -9,13 +9,13 @@ controller:
     i: 0.015   
     min: 0
     max: 100 
-    ref_speed: 4
+    ref_speed: 3
     speed_raise_rate: 20
   steering:
-    k: 0.8
-    min: -1
-    max: 1
-    lookahead_dist_min: 2
+    k: 1.1
+    min: -0.5
+    max: 0.5
+    lookahead_dist_min: 1.6
     lookahead_dist_max: 6
 
-track_loop: true
+track_loop: false

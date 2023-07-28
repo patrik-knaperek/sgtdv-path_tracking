@@ -24,7 +24,13 @@ int main (int argc, char** argv)
     ros::Subscriber stopSub = handle.subscribe("stop", 1, &PathTrackingSynch::StopCallback, &synchObj);
     ros::Subscriber startSub = handle.subscribe("start", 1, &PathTrackingSynch::StartCallback, &synchObj);
 
-    synchObj.Do();
+    ros::Rate looprate(FPS);
+    while (ros::ok())
+    {
+        ros::spinOnce();
+        synchObj.Do();
+        looprate.sleep();
+    }
 
     return 0;
 }
