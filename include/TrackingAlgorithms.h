@@ -47,7 +47,12 @@ public:
         m_targetPub = targetPub;
         m_steeringPosePub = steeringPosePub;
     };
+    virtual void SetRefSpeed(const float refSpeed)
+    {
+        m_refSpeed = refSpeed;
+    };
 private:
+    float m_refSpeed;
 };
 
 /*class Stanley : public TrackingAlgorithm

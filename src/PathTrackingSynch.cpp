@@ -33,13 +33,21 @@ void PathTrackingSynch::DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &m
     m_velocityReady = true;
 }
 
-void PathTrackingSynch::StopCallback(const std_msgs::Empty::ConstPtr &msg)
+bool PathTrackingSynch::StopCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
     m_pathTracking.StopVehicle();
+    return true;
 }
-void PathTrackingSynch::StartCallback(const std_msgs::Empty::ConstPtr &msg)
+bool PathTrackingSynch::StartCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
     m_pathTracking.StartVehicle();
+    return true;
+}
+
+bool PathTrackingSynch::SetSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &msg)
+{
+    m_pathTracking.SetRefSpeed(req.data);
+    return 1;
 }
 
 void PathTrackingSynch::Do()

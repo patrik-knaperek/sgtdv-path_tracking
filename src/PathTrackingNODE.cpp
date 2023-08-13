@@ -22,8 +22,10 @@ int main (int argc, char** argv)
     // ros::Subscriber poseSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
     ros::Subscriber poseSub = handle.subscribe("slam/pose", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
     ros::Subscriber velocitySub = handle.subscribe("velocity_estimate", 1, &PathTrackingSynch::DoVelocityEstimate, &synchObj);
-    ros::Subscriber stopSub = handle.subscribe("stop", 1, &PathTrackingSynch::StopCallback, &synchObj);
-    ros::Subscriber startSub = handle.subscribe("start", 1, &PathTrackingSynch::StartCallback, &synchObj);
+    ros::ServiceServer stopSub = handle.advertiseService("pathTracking/stop", &PathTrackingSynch::StopCallback, &synchObj);
+    ros::ServiceServer startSub = handle.advertiseService("pathTracking/start", &PathTrackingSynch::StartCallback, &synchObj);
+    ros::ServiceServer setSpeedServer 
+        = handle.advertiseService("pathTracking/set_speed", &PathTrackingSynch::SetSpeedCallback, &synchObj);
 
     ros::Rate looprate(FPS);
     while (ros::ok())

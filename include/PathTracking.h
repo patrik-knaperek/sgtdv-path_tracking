@@ -29,7 +29,10 @@ public:
     void Do(const PathTrackingMsg &msg);
     void StopVehicle();
     void StartVehicle();
-    
+    void SetRefSpeed(const float refSpeed)
+    {
+        m_algorithm->SetRefSpeed(refSpeed);
+    }
 private:
     template<typename T> void GetParam(const ros::NodeHandle &handle, const std::string &name, T* storage) const;
     template<typename T> void GetParam(const ros::NodeHandle &handle, const std::string &name,

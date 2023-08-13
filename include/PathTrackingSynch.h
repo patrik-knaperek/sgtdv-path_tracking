@@ -6,10 +6,12 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
+#include <std_srvs/Empty.h>
 #include "../include/PathTracking.h"
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
 #include <sgtdv_msgs/CarVel.h>
+#include <sgtdv_msgs/Float32Srv.h>
 #include "../include/Messages.h"
 
 class PathTrackingSynch
@@ -31,8 +33,9 @@ public:
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
     void DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg);
-    void StopCallback(const std_msgs::Empty::ConstPtr &msg);
-    void StartCallback(const std_msgs::Empty::ConstPtr &msg);
+    bool StopCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+    bool StartCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
+    bool SetSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &msg);
     void Do();
 
 private:

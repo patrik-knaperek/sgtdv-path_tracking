@@ -28,7 +28,7 @@ void PathTracking::LoadParams(const ros::NodeHandle &handle) const
     GetParam(handle, "controller/speed/i", &params.speedI);
     GetParam(handle, "/controller/speed/min", &params.speedMin);
     GetParam(handle, "/controller/speed/max", &params.speedMax);
-    GetParam(handle, "/controller/speed/ref_speed", &params.refSpeed);
+    // GetParam(handle, "/controller/speed/ref_speed", &params.refSpeed);
     GetParam(handle, "/controller/speed/speed_raise_rate", &params.speedRaiseRate);
     GetParam(handle, "/controller/steering/k", &params.steeringK);
     GetParam(handle, "/controller/steering/min", &params.steeringMin);

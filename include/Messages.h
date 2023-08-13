@@ -29,7 +29,7 @@ struct Params
     float frontWheelsOffset;
 
     /* speed controller parameters */
-    float refSpeed;
+    // float refSpeed;
     float speedP;
     float speedI;
     float speedMin;

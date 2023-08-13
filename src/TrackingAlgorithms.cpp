@@ -59,7 +59,7 @@ int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t
     }
 
     // regulation error
-    const double speedError = m_params.refSpeed - actSpeed;
+    const double speedError = m_refSpeed - actSpeed;
 
     // proportional
     speedCmdAct = m_params.speedP * speedError;
