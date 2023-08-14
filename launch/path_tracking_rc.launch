@@ -2,10 +2,10 @@
 <launch>
     <rosparam command="load" file="$(find path_tracking)/params/path_tracking_rc.yaml"/>
 	<node pkg="path_tracking" type="path_tracking" name="pathTracking" output="screen"/>
-    <node pkg="ptp_trajectory" type="ptp_trajectory" name="PTPtrajectory" output="screen"/>
+		<!--<node pkg="ptp_trajectory" type="ptp_trajectory" name="PTPtrajectory" output="screen"/>-->
 	<node pkg="pose_estimate" type="pose_estimate" name="PoseEstimate" output="screen"/>
-	<node pkg="tf2_ros" type="static_transform_publisher" name="camera_center_to_base_link" 
-		args="0 0 0 0 0 0 base_link camera_center" />
+	<!--<node pkg="tf2_ros" type="static_transform_publisher" name="camera_center_to_base_link" 
+		args="0 0 0 0 0 0 base_link camera_center" />-->
 
 	<!--<node pkg="visual_odometry" type="visual_odometry" name="base_link_to_odom" output="screen"/>-->
 	<rosparam command="load" param="/base_frame">"base_link"</rosparam>

@@ -52,7 +52,9 @@ void TrackingAlgorithm::VisualizeSteering() const
 
 int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev)
 {
-    static float speedCmdAct = 0.f;
+    ROS_INFO_STREAM("ref speed: " << m_refSpeed);
+	ROS_INFO_STREAM("speed: " << actSpeed);
+	static float speedCmdAct = 0.f;
     static double integralSpeed = 0.0;
     static ros::Time lastRaise = ros::Time::now();
     if (speedCmdPrev == 0)

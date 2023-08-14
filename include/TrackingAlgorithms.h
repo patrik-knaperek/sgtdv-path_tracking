@@ -60,7 +60,7 @@ public:
         m_refSpeed = refSpeed;
     };
 private:
-    float m_refSpeed;
+    float m_refSpeed = 0.;
 };
 
 /*class Stanley : public TrackingAlgorithm
