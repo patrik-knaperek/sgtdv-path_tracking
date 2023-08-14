@@ -4,6 +4,7 @@
 /*****************************************************/
 
 #include "../include/Messages.h"
+#include "../../SGT_Macros.h"
 #include <ros/ros.h>
 #include <cmath>
 #include "opencv2/core/core.hpp"
@@ -27,9 +28,12 @@ protected:
     TrackingAlgorithm(const ros::NodeHandle &handle);
     ~TrackingAlgorithm() = default;
 
+    virtual int8_t ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev);
+
+#ifdef SGT_VISUALIZATION
     virtual void VisualizePoint(const cv::Vec2f point, const int point_id, const std::string& ns, const cv::Vec3f color) const;
     virtual void VisualizeSteering() const;
-    virtual int8_t ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev);
+#endif /* SGT_VISUALIZATION */
 
     ros::Publisher m_targetPub;
     ros::Publisher m_steeringPosePub;
@@ -42,11 +46,15 @@ public:
     {
         m_params = params;
     };
+    
+#ifdef SGT_VISUALIZATION
     virtual void SetVisualizationPublishers(const ros::Publisher &targetPub, const ros::Publisher &steeringPosePub)
     {
         m_targetPub = targetPub;
         m_steeringPosePub = steeringPosePub;
     };
+#endif /* SGT_VISUALIZATION */
+
     virtual void SetRefSpeed(const float refSpeed)
     {
         m_refSpeed = refSpeed;

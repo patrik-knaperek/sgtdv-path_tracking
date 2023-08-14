@@ -25,6 +25,12 @@ $ cd <path_to_SGT_workspace>/ros_implementation
 $ catkin build path_tracking
 ```
 
+### Compilation configuration
+* [`SGT_Macros.h`](../SGT_Macros.h)
+	* `SGT_VISUALIZE` : publish intermediate calculations on visualizable topics
+        - `/pathtracking/visualize/target [visualization_msgs/Marker]` - lookahead (target) point, rear wheelbase position,  closest trajectory point
+        - `/pathtracking/visualize/steering [geometry_msgs/PoseStamped]` - steering angle command
+
 ## Launch
 ```sh
 $ source <path_to_SGT_workspace>/ros_implementation/devel/setup.bash

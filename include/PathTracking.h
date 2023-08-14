@@ -22,10 +22,13 @@ public:
     {
         m_cmdPublisher = cmdPub;
     };
+#ifdef SGT_VISUALIZATION
     void SetVisualizationPublishers(const ros::Publisher &targetPub, const ros::Publisher &steeringPosePub)
     {
         m_algorithm->SetVisualizationPublishers(targetPub, steeringPosePub);
     };
+#endif /* SGT_VISUALIZATION */
+
     void Do(const PathTrackingMsg &msg);
     void StopVehicle();
     void StartVehicle();

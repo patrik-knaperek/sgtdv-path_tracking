@@ -12,6 +12,7 @@ TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle)
     m_control.steeringAngle = 0;
 }
 
+#ifdef SGT_VISUALIZATION
 void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, const std::string& ns, const cv::Vec3f color) const
 {
     visualization_msgs::Marker marker;
@@ -47,6 +48,7 @@ void TrackingAlgorithm::VisualizeSteering() const
 
     m_steeringPosePub.publish(steeringPose);
 }
+#endif /* SGT_VISUALIZATION */
 
 int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev)
 {
@@ -217,7 +219,9 @@ void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPo
 {
     const cv::Vec2f pos(carPose->position.x, carPose->position.y);
     m_rearWheelsPos = pos - cv::Vec2f(cosf(carPose->yaw) * m_params.rearWheelsOffset, sinf(carPose->yaw)  * m_params.rearWheelsOffset);
+#ifdef SGT_VISUALIZATION
     VisualizePoint(m_rearWheelsPos, 1, "rear wheels" , cv::Vec3f(0.0, 0.0, 1.0));
+#endif /* SGT_VISUALIZATION */
 }
 
 void PurePursuit::ComputeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &carVel)
@@ -301,9 +305,11 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
         targetPoint(0) += cos(slopeAngle) * x;
         targetPoint(1) += sin(slopeAngle) * x;
     }
-
+#ifdef SGT_VISUALIZATION
     VisualizePoint(targetPoint, 0, "target point", cv::Vec3f(1.0, 0.0, 0.0));
     VisualizePoint(cv::Vec2f(trajectory->points[centerLineIdx].x, trajectory->points[centerLineIdx].y), 2, "closest point", cv::Vec3f(1.0, 1.0, 0.0));
+#endif /* SGT_VISUALIZATION */
+
     return targetPoint;
 }
 
@@ -323,6 +329,9 @@ float PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::
         steeringAngle = m_params.steeringMin;
     }
 
+#ifdef SGT_VISUALIZATION
     VisualizeSteering();
+#endif /* SGT_VISUALIZATION */
+
     return steeringAngle;
 }

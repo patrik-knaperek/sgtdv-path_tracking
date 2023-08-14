@@ -24,11 +24,12 @@ public:
     {
         m_pathTracking.SetCmdPublisher(cmdPub);
     };        
-    
+#ifdef SGT_VISUALIZATION
     void SetVisualizationPublishers(const ros::Publisher &targetPub, const ros::Publisher &steeringPosePub)
     {
         m_pathTracking.SetVisualizationPublishers(targetPub, steeringPosePub);
     };
+#endif /* SGT_VISUALIZATION */
     
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);
