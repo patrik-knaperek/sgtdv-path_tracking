@@ -3,18 +3,25 @@
 //Authors: Tereza Ábelová, Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
-#include "../include/Messages.h"
-#include "../../SGT_Macros.h"
-#include <ros/ros.h>
+#pragma once
+
+/* C++ */
 #include <cmath>
 #include "opencv2/core/core.hpp"
+
+/* ROS */
+#include <ros/ros.h>
+#include <visualization_msgs/Marker.h>
+#include <geometry_msgs/PoseStamped.h>
+
+/* SGT */
 #include <sgtdv_msgs/Point2D.h>
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
 #include <sgtdv_msgs/CarVel.h>
 #include <sgtdv_msgs/Control.h>
-#include <visualization_msgs/Marker.h>
-#include <geometry_msgs/PoseStamped.h>
+#include "../../SGT_Macros.h"
+#include "../include/Messages.h"
 
 constexpr float FPS = 60.f;
 constexpr float TIME_PER_FRAME = 1.f / FPS;
@@ -24,23 +31,32 @@ constexpr float TIME_PER_FRAME = 1.f / FPS;
 
 class TrackingAlgorithm
 {
-protected:
-    TrackingAlgorithm(const ros::NodeHandle &handle);
-    ~TrackingAlgorithm() = default;
-
-    virtual int8_t ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev);
-
-#ifdef SGT_VISUALIZATION
-    virtual void VisualizePoint(const cv::Vec2f point, const int point_id, const std::string& ns, const cv::Vec3f color) const;
-    virtual void VisualizeSteering() const;
-#endif /* SGT_VISUALIZATION */
-
-    ros::Publisher m_targetPub;
-    ros::Publisher m_steeringPosePub;
-    Control m_control;
-    Params m_params;
-
 public:
+    struct Params
+    {
+        /* vehicle parameters */
+        float carLength;
+        float rearWheelsOffset;
+        float frontWheelsOffset;
+
+        /* speed PID controller parameters */
+        // float refSpeed;
+        float speedP;
+        float speedI;
+        float speedMin;
+        float speedMax;
+        float speedRaiseRate;
+
+        /* steering control parameters*/
+        float steeringK;
+        float steeringMin;
+        float steeringMax;
+        float lookAheadDistMin;
+        float lookAheadDistMax;
+
+        bool trackLoop;
+    };
+
     virtual void Do(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &controlMsg) = 0;
     virtual void SetParams(const Params &params)
     {
@@ -59,28 +75,32 @@ public:
     {
         m_refSpeed = refSpeed;
     };
+    void ResetIntegral()
+    {
+        m_speedIntegralError = 0.;
+    };
+
+protected:
+    TrackingAlgorithm(const ros::NodeHandle &handle);
+    ~TrackingAlgorithm() = default;
+
+    virtual int8_t ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev);
+
+#ifdef SGT_VISUALIZATION
+    virtual void VisualizePoint(const cv::Vec2f point, const int point_id, const std::string& ns, const cv::Vec3f color) const;
+    virtual void VisualizeSteering() const;
+#endif /* SGT_VISUALIZATION */
+
+    ros::Publisher m_targetPub;
+    ros::Publisher m_steeringPosePub;
+    Control m_control;
+    Params m_params;
+
 private:
     float m_refSpeed = 0.;
+    float m_speedIntegralError = 0.;
+
 };
-
-/*class Stanley : public TrackingAlgorithm
-{
-public:
-    Stanley(ros::NodeHandle &handle);
-    ~Stanley();
-
-    virtual Control Do(const PathTrackingMsg &msg);
-
-private:
-    cv::Vec2f m_frontWheelsPos;
-    float m_thetaDelta;
-
-    void ComputeFrontWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose);
-    void ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint);
-    cv::Vec2f FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory);
-    float ControlCommand(float speed) const;
-    float SpeedGain(float speed) const;
-};*/
 
 class PurePursuit : public TrackingAlgorithm
 {

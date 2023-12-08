@@ -5,9 +5,10 @@ vehicle:
 
 controller:
   speed:
-    p: 10       
-    i: 0.015   
-    min: 0
+    p: 18
+    i: 5   
+    # min: 0
+    min: -100
     max: 100 
     ref_speed: 1.5
     speed_raise_rate: 20

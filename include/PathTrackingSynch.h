@@ -36,7 +36,7 @@ public:
     void DoVelocityEstimate(const sgtdv_msgs::CarVel::ConstPtr &msg);
     bool StopCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
     bool StartCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
-    bool SetSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &msg);
+    bool SetSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &res);
     void Do();
 
 private:

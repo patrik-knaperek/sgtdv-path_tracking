@@ -7,7 +7,8 @@
 #include "../include/PathTracking.h"
 
 PathTracking::PathTracking(const ros::NodeHandle &handle) :
-  m_algorithm(new PurePursuit(handle))
+  m_handle(handle)
+, m_algorithm(new PurePursuit(handle))
 , m_stopped(true)
 {
     //m_algorithm = new Stanley(handle); // malfunctioning, needs fix
@@ -17,43 +18,29 @@ PathTracking::PathTracking(const ros::NodeHandle &handle) :
 void PathTracking::LoadParams(const ros::NodeHandle &handle) const
 {
     ROS_INFO("LOADING PARAMETERS");
-    Params params;
-    // load vehicle parameters 
-    GetParam(handle, "/vehicle/car_length", &params.carLength);
-    GetParam(handle, "/vehicle/rear_wheels_offset", &params.rearWheelsOffset);
-    GetParam(handle, "/vehicle/front_wheels_offset", &params.frontWheelsOffset);
+    TrackingAlgorithm::Params params;
     
-    // load controller parameters
-    GetParam(handle, "/controller/speed/p", &params.speedP);
-    GetParam(handle, "controller/speed/i", &params.speedI);
-    GetParam(handle, "/controller/speed/min", &params.speedMin);
-    GetParam(handle, "/controller/speed/max", &params.speedMax);
-    // GetParam(handle, "/controller/speed/ref_speed", &params.refSpeed);
-    GetParam(handle, "/controller/speed/speed_raise_rate", &params.speedRaiseRate);
-    GetParam(handle, "/controller/steering/k", &params.steeringK);
-    GetParam(handle, "/controller/steering/min", &params.steeringMin);
-    GetParam(handle, "/controller/steering/max", &params.steeringMax);
-    GetParam(handle, "/controller/steering/lookahead_dist_min", &params.lookAheadDistMin);
-    GetParam(handle, "/controller/steering/lookahead_dist_max", &params.lookAheadDistMax);
+    /* load vehicle parameters */
+    Utils::loadParam(handle, "/vehicle/car_length", &params.carLength);
+    Utils::loadParam(handle, "/vehicle/rear_wheels_offset", &params.rearWheelsOffset);
+    Utils::loadParam(handle, "/vehicle/front_wheels_offset", &params.frontWheelsOffset);
     
-    GetParam(handle, "/track_loop", true, &params.trackLoop);
+    /* load PID controller parameters */
+    Utils::loadParam(handle, "/controller/speed/p", &params.speedP);
+    Utils::loadParam(handle, "controller/speed/i", &params.speedI);
+    Utils::loadParam(handle, "/controller/speed/min", &params.speedMin);
+    Utils::loadParam(handle, "/controller/speed/max", &params.speedMax);
+    // Utils::loadParam(handle, "/controller/speed/ref_speed", &params.refSpeed);
+    Utils::loadParam(handle, "/controller/speed/speed_raise_rate", &params.speedRaiseRate);
+    Utils::loadParam(handle, "/controller/steering/k", &params.steeringK);
+    Utils::loadParam(handle, "/controller/steering/min", &params.steeringMin);
+    Utils::loadParam(handle, "/controller/steering/max", &params.steeringMax);
+    Utils::loadParam(handle, "/controller/steering/lookahead_dist_min", &params.lookAheadDistMin);
+    Utils::loadParam(handle, "/controller/steering/lookahead_dist_max", &params.lookAheadDistMax);
+
+    Utils::loadParam(handle, "/track_loop", true, &params.trackLoop);
     m_algorithm->SetParams(params);
     
-}
-
-template<typename T>
-void PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &name, T* storage) const
-{
-    if (!handle.getParam(name, *storage))
-        ROS_ERROR("Failed to get parameter \"%s\" from server\n", name.data());
-}
-
-template<typename T> 
-void PathTracking::GetParam(const ros::NodeHandle &handle, const std::string &name,
-                            const T &defaultValue, T* storage) const
-{
-    if (!handle.param<T>(name, *storage, defaultValue))
-        ROS_WARN_STREAM("Failed to get parameter " << name.data() << " from server, setting default: " << defaultValue);
 }
 
 void PathTracking::StopVehicle()
@@ -67,6 +54,8 @@ void PathTracking::StopVehicle()
 
 void PathTracking::StartVehicle()
 {
+    LoadParams(m_handle);
+    m_algorithm->ResetIntegral();
     m_stopped = false;
     ROS_INFO("STARTING VEHICLE");
 }

@@ -1,15 +1,23 @@
 /*****************************************************/
 //Organization: Stuba Green Team
-//Authors: Juraj Krasňanský
+//Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
-#include <ros/ros.h>
+#pragma once
+
+/* C++ */
 #include <chrono>
+
+/* ROS */
+#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+/* SGT */
 #include <sgtdv_msgs/PathTrackingMsg.h>
+#include <sgtdv_msgs/Control.h>
 #include "../include/Messages.h"
 #include "../include/TrackingAlgorithms.h"
-#include <sgtdv_msgs/Control.h>
-#include <geometry_msgs/PoseStamped.h>
+#include "../../SGT_Utils.h"
 
 class PathTracking
 {
@@ -37,9 +45,7 @@ public:
         m_algorithm->SetRefSpeed(refSpeed);
     }
 private:
-    template<typename T> void GetParam(const ros::NodeHandle &handle, const std::string &name, T* storage) const;
-    template<typename T> void GetParam(const ros::NodeHandle &handle, const std::string &name,
-                                        const T &defaultValue, T* storage) const;
+    ros::NodeHandle m_handle;
     ros::Publisher m_cmdPublisher;
     TrackingAlgorithm *m_algorithm;
     bool m_stopped;

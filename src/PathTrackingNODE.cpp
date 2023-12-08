@@ -20,10 +20,10 @@ int main (int argc, char** argv)
     synchObj.SetVisualizationPublishers(targetPublisher, steeringPosePublisher);
 #endif /* SGT_VISUALIZATION */
 
-    ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 1, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
-    ros::Subscriber poseSub = handle.subscribe("pose_estimate", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
+    ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 10, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
+    ros::Subscriber poseSub = handle.subscribe("pose_estimate", 10, &PathTrackingSynch::DoPoseEstimate, &synchObj);
     // ros::Subscriber poseSub = handle.subscribe("slam/pose", 1, &PathTrackingSynch::DoPoseEstimate, &synchObj);
-    ros::Subscriber velocitySub = handle.subscribe("velocity_estimate", 1, &PathTrackingSynch::DoVelocityEstimate, &synchObj);
+    ros::Subscriber velocitySub = handle.subscribe("velocity_estimate", 10, &PathTrackingSynch::DoVelocityEstimate, &synchObj);
     ros::ServiceServer stopSub = handle.advertiseService("pathTracking/stop", &PathTrackingSynch::StopCallback, &synchObj);
     ros::ServiceServer startSub = handle.advertiseService("pathTracking/start", &PathTrackingSynch::StartCallback, &synchObj);
     ros::ServiceServer setSpeedServer 

@@ -44,7 +44,7 @@ bool PathTrackingSynch::StartCallback(std_srvs::Empty::Request &req, std_srvs::E
     return true;
 }
 
-bool PathTrackingSynch::SetSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &msg)
+bool PathTrackingSynch::SetSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &res)
 {
     m_pathTracking.SetRefSpeed(req.data);
     return 1;

@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
     <rosparam command="load" file="$(find path_tracking)/params/path_tracking_sim.yaml"/>
+    
+    <node pkg="rosservice" type="rosservice" name="set_path_tracking_log_level" args="call --wait /pathTracking/set_logger_level 'ros.path_tracking' 'info'" />
     <node pkg="path_tracking_sim_interface" type="path_tracking_sim_interface" name="pathTrackingSimInterface" output="screen"/>
     <node pkg="path_tracking" type="path_tracking" name="pathTracking" output="screen"/>
     <!-- <include file="$(find control_meta)/missions/trackdrive.launch"/> -->

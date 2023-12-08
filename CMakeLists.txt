@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sgtdv_msgs
 )
 
+find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 message(STATUS "OpenCV library status:")
@@ -27,6 +28,7 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 

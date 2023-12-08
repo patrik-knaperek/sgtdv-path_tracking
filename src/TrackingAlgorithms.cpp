@@ -8,8 +8,7 @@
 
 TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle)
 {
-    m_control.speed = 0;
-    m_control.steeringAngle = 0;
+    
 }
 
 #ifdef SGT_VISUALIZATION
@@ -52,15 +51,10 @@ void TrackingAlgorithm::VisualizeSteering() const
 
 int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t speedCmdPrev)
 {
-    ROS_INFO_STREAM("ref speed: " << m_refSpeed);
-	ROS_INFO_STREAM("speed: " << actSpeed);
+    ROS_DEBUG_STREAM("ref speed: " << m_refSpeed);
+	ROS_DEBUG_STREAM("speed: " << actSpeed);
 	static float speedCmdAct = 0.f;
-    static double integralSpeed = 0.0;
-    static ros::Time lastRaise = ros::Time::now();
-    if (speedCmdPrev == 0)
-    {
-        integralSpeed = 0.;
-    }
+    static double lastRaise = ros::Time::now().toSec();
 
     // regulation error
     const double speedError = m_refSpeed - actSpeed;
@@ -71,136 +65,33 @@ int8_t TrackingAlgorithm::ComputeSpeedCommand(const float actSpeed, const int8_t
     // integral
     if (m_params.speedI)
     {
-        if (m_control.speed < m_params.speedMax)   // Anti-windup
+        if (speedCmdPrev < m_params.speedMax)   // Anti-windup
         {
-            integralSpeed += speedError * TIME_PER_FRAME;
+            m_speedIntegralError += speedError * TIME_PER_FRAME;
         }
-        speedCmdAct += m_params.speedI * integralSpeed;
+        speedCmdAct += m_params.speedI * m_speedIntegralError;
     }
 
     // ramp
-    if (speedCmdAct - speedCmdPrev > 1.0)
-    {
-        if ((ros::Time::now() - lastRaise) > ros::Duration(1 / m_params.speedRaiseRate))
-        {
-            speedCmdAct++;
-            lastRaise = ros::Time::now();
-        } else
-        {
-            speedCmdAct = speedCmdPrev;
+    // const double speedCmdDelta = speedCmdAct - speedCmdPrev;
+    // if (std::abs(speedCmdDelta) > 1.0)
+    // {
+    //     if ((ros::Time::now().toSec() - lastRaise) > 1. / m_params.speedRaiseRate)
+    //     {
+    //         speedCmdAct = speedCmdPrev + (speedCmdDelta) / std::abs(speedCmdDelta);
+    //         lastRaise = ros::Time::now().toSec();
+    //     } else
+    //     {
+    //         speedCmdAct = speedCmdPrev;
 
-        }
-    }
+    //     }
+    // }
     
     // saturation
-    if (speedCmdAct > m_params.speedMax)
-    {
-       speedCmdAct = m_params.speedMax;
-    } else if (speedCmdAct < m_params.speedMin)
-    {
-        speedCmdAct = m_params.speedMin;
-    }
-
+    speedCmdAct = std::max(m_params.speedMin, std::min(speedCmdAct, m_params.speedMax));
+    
     return static_cast<int8_t>(speedCmdAct);
 }
-
-/*Stanley::Stanley(ros::NodeHandle &handle) :
-    TrackingAlgorithm(handle)
-{
-
-}
-
-Stanley::~Stanley()
-{
-
-}
-
-Control Stanley::Do(const PathTrackingMsg &msg)
-{
-    if (m_coneIndexOffset >= msg.trajectory->points.size())
-    {
-        m_control.speed = 0.f;
-        m_control.steeringAngle = 0.f;
-
-        return m_control;
-    }
-
-    ComputeFrontWheelPos(msg.carPose);
-    ComputeThetaDelta(msg.carPose->yaw, FindTargetPoint(msg.trajectory));
-    
-    if (m_coneIndexOffset >= msg.trajectory->points.size())
-    {
-        m_control.speed = 0.f;
-        m_control.steeringAngle = 0.f;
-
-        return m_control;
-    }
-
-    m_control.steeringAngle = ControlCommand(msg.carVel->speed);
-    // saturation
-    if (m_control.steeringAngle > m_speedRange[1])
-    {
-        m_control.steeringAngle = m_speedRange[1];
-    } else if (m_control.steeringAngle < m_speedRange[0])
-    {
-        m_control.steeringAngle = m_speedRange[0];
-    }
-
-    this->ComputeSpeedCommand(msg.carVel->speed);
-
-    return m_control;
-}
-
-void Stanley::ComputeFrontWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPose)
-{
-    const cv::Vec2f pos(carPose->position.x, carPose->position.y);
-    m_frontWheelsPos = pos + cv::Vec2f(cosf(carPose->yaw), sinf(carPose->yaw)) * m_frontWheelsOffset;
-    VisualizePoint(m_frontWheelsPos, 2, cv::Vec3f(0.0, 0.0, 1.0));
-}
-
-void Stanley::ComputeThetaDelta(float theta, const cv::Vec2f &closestPoint)
-{
-    const cv::Vec2f tangent(closestPoint - m_frontWheelsPos);
-    m_thetaDelta = theta - atan2(tangent[1], tangent[0]);
-}
-
-cv::Vec2f Stanley::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory)
-{
-    for (size_t i = m_coneIndexOffset; i < trajectory->points.size(); i++)
-    {
-        cv::Vec2f pointA(trajectory->points[i].x, trajectory->points[i].y);
-        cv::Vec2f pointB(trajectory->points[i+1].x, trajectory->points[i+1].y);
-
-        if (static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) > static_cast<float>(cv::norm(m_frontWheelsPos - pointB)) ||
-            static_cast<float>(cv::norm(m_frontWheelsPos - pointA)) < m_lookAheadDist)
-        {
-            m_coneIndexOffset++;
-
-            continue;
-        }
-        VisualizePoint(pointA, 0, cv::Vec3f(1.0, 0.0, 0.0));
-        VisualizePoint(pointB, 1, cv::Vec3f(1.0, 1.0, 0.0));
-        return pointA;
-    }
-
-    return cv::Vec2f(0.f, 0.f);
-}
-
-float Stanley::SpeedGain(float speed) const
-{
-    if (speed != 0)
-    {
-        return m_controlGain / speed; //needs testing
-    } 
-    else
-        return 1;
-    
-}
-
-float Stanley::ControlCommand(float speed) const
-{
-    return m_thetaDelta * SpeedGain(speed);
-}*/
 
 PurePursuit::PurePursuit(const ros::NodeHandle &handle) :
     TrackingAlgorithm(handle)
@@ -326,7 +217,7 @@ float PurePursuit::ComputeSteeringCommand(const PathTrackingMsg &msg, const cv::
     if (steeringAngle > m_params.steeringMax)
     {
         steeringAngle = m_params.steeringMax;
-    } else if (m_control.steeringAngle < m_params.steeringMin)
+    } else if (steeringAngle < m_params.steeringMin)
     {
         steeringAngle = m_params.steeringMin;
     }
