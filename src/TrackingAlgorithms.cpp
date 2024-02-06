@@ -27,9 +27,9 @@ void TrackingAlgorithm::VisualizePoint(const cv::Vec2f point, const int p_id, co
     marker.action               = visualization_msgs::Marker::ADD;
     marker.id                   = p_id;
     marker.ns                   = ns;
-    marker.scale.x              = 0.5;
-    marker.scale.y              = 0.5;
-    marker.scale.z              = 0.5;
+    marker.scale.x              = 0.3;
+    marker.scale.y              = 0.3;
+    marker.scale.z              = 0.3;
     marker.header.stamp         = ros::Time::now();
     marker.header.frame_id      = "map";
     m_targetPub.publish(marker);
@@ -113,7 +113,9 @@ void PurePursuit::ComputeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &carPo
     const cv::Vec2f pos(carPose->position.x, carPose->position.y);
     m_rearWheelsPos = pos - cv::Vec2f(cosf(carPose->yaw) * m_params.rearWheelsOffset, sinf(carPose->yaw)  * m_params.rearWheelsOffset);
 #ifdef SGT_VISUALIZATION
-    VisualizePoint(m_rearWheelsPos, 1, "rear wheels" , cv::Vec3f(0.0, 0.0, 1.0));
+    VisualizePoint(m_rearWheelsPos, 2, "rear wheels" , cv::Vec3f(0.0, 0.0, 1.0));
+    const auto frontWheelsPos = pos + cv::Vec2f(cosf(carPose->yaw) * m_params.frontWheelsOffset, sinf(carPose->yaw)  * m_params.frontWheelsOffset);
+    VisualizePoint(frontWheelsPos, 3, "front wheels" , cv::Vec3f(0.0, 0.0, 1.0));
 #endif /* SGT_VISUALIZATION */
 }
 
@@ -200,7 +202,7 @@ cv::Vec2f PurePursuit::FindTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     }
 #ifdef SGT_VISUALIZATION
     VisualizePoint(targetPoint, 0, "target point", cv::Vec3f(1.0, 0.0, 0.0));
-    VisualizePoint(cv::Vec2f(trajectory->points[centerLineIdx].x, trajectory->points[centerLineIdx].y), 2, "closest point", cv::Vec3f(1.0, 1.0, 0.0));
+    VisualizePoint(cv::Vec2f(trajectory->points[centerLineIdx].x, trajectory->points[centerLineIdx].y), 1, "closest point", cv::Vec3f(1.0, 1.0, 0.0));
 #endif /* SGT_VISUALIZATION */
 
     return targetPoint;

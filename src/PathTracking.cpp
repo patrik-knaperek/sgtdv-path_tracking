@@ -72,5 +72,6 @@ void PathTracking::Do(const PathTrackingMsg &msg)
         m_algorithm->Do(msg, controlMsg);
     }
 
+    controlMsg->stamp = ros::Time::now();
     m_cmdPublisher.publish(controlMsg);
 }

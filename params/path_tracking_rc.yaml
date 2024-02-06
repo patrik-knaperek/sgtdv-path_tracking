@@ -5,17 +5,17 @@ vehicle:
 
 controller:
   speed:
-    p: 10       
-    i: 0.8
+    p: 8.0       
+    i: 70.0
     min: 0
     max: 100 
     ref_speed: 0.8
     speed_raise_rate: 20
   steering:
-    k: 0.8
+    k: 1.0
     min: -1
     max: 1
-    lookahead_dist_min: 0.8
-    lookahead_dist_max: 2.5
+    lookahead_dist_min: 1.0
+    lookahead_dist_max: 3.0
 
 track_loop: false

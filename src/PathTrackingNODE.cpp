@@ -15,7 +15,7 @@ int main (int argc, char** argv)
     synchObj.SetCmdPublisher(commandPublisher);
 
 #ifdef SGT_VISUALIZATION
-    ros::Publisher targetPublisher = handle.advertise<visualization_msgs::Marker>("pathtracking/visualize/target",1);
+    ros::Publisher targetPublisher = handle.advertise<visualization_msgs::Marker>("pathtracking/visualize/target",4);
     ros::Publisher steeringPosePublisher = handle.advertise<geometry_msgs::PoseStamped>("pathtracking/visualize/steering", 1);
     synchObj.SetVisualizationPublishers(targetPublisher, steeringPosePublisher);
 #endif /* SGT_VISUALIZATION */
