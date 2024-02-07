@@ -19,6 +19,10 @@ int main (int argc, char** argv)
     ros::Publisher steeringPosePublisher = handle.advertise<geometry_msgs::PoseStamped>("pathtracking/visualize/steering", 1);
     synchObj.SetVisualizationPublishers(targetPublisher, steeringPosePublisher);
 #endif /* SGT_VISUALIZATION */
+#ifdef SGT_DEBUG_STATE
+	ros::Publisher pathtracking_debug_state_publisher = handle.advertise<sgtdv_msgs::DebugState>("pathtracking_debug_state", 10);
+	synchObj.setVisDebugPublisher(pathtracking_debug_state_publisher);
+#endif
 
     ros::Subscriber trajectorySub = handle.subscribe("pathplanning_trajectory", 10, &PathTrackingSynch::DoPlannedTrajectory, &synchObj);
     ros::Subscriber poseSub = handle.subscribe("pose_estimate", 10, &PathTrackingSynch::DoPoseEstimate, &synchObj);

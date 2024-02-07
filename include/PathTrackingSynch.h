@@ -30,6 +30,9 @@ public:
         m_pathTracking.SetVisualizationPublishers(targetPub, steeringPosePub);
     };
 #endif /* SGT_VISUALIZATION */
+#ifdef SGT_DEBUG_STATE
+    void setVisDebugPublisher(ros::Publisher publisher) { m_pathTracking.SetVisDebugPublisher(publisher); };
+#endif
     
     void DoPlannedTrajectory(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
     void DoPoseEstimate(const sgtdv_msgs::CarPose::ConstPtr &msg);

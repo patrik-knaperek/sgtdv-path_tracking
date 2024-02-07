@@ -17,6 +17,7 @@
 #include <sgtdv_msgs/Control.h>
 #include "../include/Messages.h"
 #include "../include/TrackingAlgorithms.h"
+#include <sgtdv_msgs/DebugState.h>
 #include "../../SGT_Utils.h"
 
 class PathTracking
@@ -36,6 +37,9 @@ public:
         m_algorithm->SetVisualizationPublishers(targetPub, steeringPosePub);
     };
 #endif /* SGT_VISUALIZATION */
+#ifdef SGT_DEBUG_STATE
+    void SetVisDebugPublisher(const ros::Publisher& publisher) { m_visDebugPublisher = publisher; };
+#endif
 
     void Do(const PathTrackingMsg &msg);
     void StopVehicle();
@@ -49,4 +53,8 @@ private:
     ros::Publisher m_cmdPublisher;
     TrackingAlgorithm *m_algorithm;
     bool m_stopped;
+
+#ifdef SGT_DEBUG_STATE
+    ros::Publisher m_visDebugPublisher;
+#endif
 };

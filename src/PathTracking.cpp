@@ -62,6 +62,13 @@ void PathTracking::StartVehicle()
 
 void PathTracking::Do(const PathTrackingMsg &msg)
 {
+#ifdef SGT_DEBUG_STATE
+	sgtdv_msgs::DebugState state;
+	state.stamp = ros::Time::now();
+	state.workingState = 1;
+	m_visDebugPublisher.publish(state);
+#endif // SGT_DEBUG_STATE
+
     static boost::shared_ptr<sgtdv_msgs::Control> controlMsg = boost::make_shared<sgtdv_msgs::Control>();
     if (m_stopped)
     {
@@ -74,4 +81,12 @@ void PathTracking::Do(const PathTrackingMsg &msg)
 
     controlMsg->stamp = ros::Time::now();
     m_cmdPublisher.publish(controlMsg);
+
+#ifdef SGT_DEBUG_STATE
+	state.stamp = ros::Time::now();
+	state.workingState = 0;
+    state.speed = controlMsg->speed;
+    state.angle = controlMsg->steeringAngle;
+	m_visDebugPublisher.publish(state);
+#endif // SGT_DEBUG_STATE
 }
