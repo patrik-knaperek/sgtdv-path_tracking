@@ -32,7 +32,7 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME} src/PathTrackingNODE.cpp src/PathTracking.cpp src/PathTrackingSynch.cpp src/TrackingAlgorithms.cpp)
+add_executable(${PROJECT_NAME} src/path_tracking_node.cpp src/path_tracking.cpp src/path_tracking_synch.cpp src/tracking_algorithms.cpp)
 
 target_link_libraries(path_tracking
   ${catkin_LIBRARIES}

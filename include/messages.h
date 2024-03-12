@@ -10,13 +10,13 @@
 
 struct PathTrackingMsg
 {
-    sgtdv_msgs::CarPose::ConstPtr carPose;
+    sgtdv_msgs::CarPose::ConstPtr car_pose;
     sgtdv_msgs::Point2DArr::ConstPtr trajectory;
-    sgtdv_msgs::CarVel::ConstPtr carVel;
+    sgtdv_msgs::CarVel::ConstPtr car_vel;
 };
 
 struct Control
 {
     int8_t speed;
-    float steeringAngle;
+    float steering_angle;
 };

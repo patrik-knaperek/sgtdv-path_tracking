@@ -15,7 +15,7 @@ ___
 ### Related packages
 * `path_planning`
 * `ptp_trajectory`
-* `path_tracking_sim_interface`
+* `control_si`
 * `racecar-interface`
 * `jetson_can_interface`
 
@@ -39,7 +39,7 @@ $ roslaunch path_tracking path_tracking.launch
 ### Launch with FSSIM 
 ([Requires AMZ FSD skeleton & FSSIM installed](https://gitlab.com/sgt-driverless/simulation/fsd_skeleton/-/blob/sgt-noetic-devel/SGT-DV_install_man.md))
 ```sh
-$ roslaunch path_tracking_sim_interface path_tracking_sim_interface
+$ roslaunch control_si control_si
 ```
 ### Launch on RC car
 ```sh
