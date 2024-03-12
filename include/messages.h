@@ -1,6 +1,6 @@
 /*****************************************************/
-//Organization: Stuba Green Team
-//Authors: Juraj Krasňanský
+/* Organization: Stuba Green Team
+/* Authors: Juraj Krasňanský
 /*****************************************************/
 
 
@@ -10,13 +10,13 @@
 
 struct PathTrackingMsg
 {
-    sgtdv_msgs::CarPose::ConstPtr car_pose;
-    sgtdv_msgs::Point2DArr::ConstPtr trajectory;
-    sgtdv_msgs::CarVel::ConstPtr car_vel;
+  sgtdv_msgs::CarPose::ConstPtr car_pose;
+  sgtdv_msgs::Point2DArr::ConstPtr trajectory;
+  sgtdv_msgs::CarVel::ConstPtr car_vel;
 };
 
 struct Control
 {
-    int8_t speed;
-    float steering_angle;
+  int8_t speed;
+  float steering_angle;
 };
