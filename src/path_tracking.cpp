@@ -28,7 +28,6 @@ PathTracking::PathTracking(const ros::NodeHandle &handle, const ros::Publisher& 
     , vis_debug_pub_(vis_debug_pub)
   #endif /* SGT_DEBUG_STATE */
 {
-  //algorithm_ = new Stanley(handle); // malfunctioning, needs fix
   loadParams(handle);
 }
 

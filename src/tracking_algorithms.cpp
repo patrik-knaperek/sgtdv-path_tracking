@@ -17,7 +17,6 @@ TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle
 )
 #endif /* SGT_VISUALIZATION */
 {
-    
 }
 
 #ifdef SGT_VISUALIZATION
@@ -114,7 +113,6 @@ PurePursuit::PurePursuit(const ros::NodeHandle& handle
   #endif /* SGT_VISUALIZATION */
   )
 {
-
 }
 
 void PurePursuit::update(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &control_msg)
