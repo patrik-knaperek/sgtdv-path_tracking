@@ -7,7 +7,7 @@
 
 /* C++ */
 #include <cmath>
-#include "opencv2/core/core.hpp"
+#include <Eigen/Eigen>
 
 /* ROS */
 #include <ros/ros.h>
@@ -85,8 +85,8 @@ protected:
   virtual int8_t computeSpeedCommand(const float act_speed, const int8_t speed_cmd_prev);
 
 #ifdef SGT_VISUALIZATION
-  virtual void visualizePoint(const cv::Vec2f point, const int point_id, 
-                              const std::string& ns, const cv::Vec3f color) const;
+  virtual void visualizePoint(const Eigen::Vector2f point, const int point_id, 
+                              const std::string& ns, const Eigen::Vector3f color) const;
   virtual void visualizeSteering() const;
 
   ros::Publisher target_pub_;
@@ -116,11 +116,11 @@ public:
   void update(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &control_msg) override;
 
 private:
-  cv::Vec2f rear_wheels_pos_;
+  Eigen::Vector2f rear_wheels_pos_;
   float lookahead_dist_;
 
   void computeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &car_pose);
   void computeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &car_vel);
-  cv::Vec2f findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const;
-  float computeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &target_point);
+  Eigen::Vector2f findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const;
+  float computeSteeringCommand(const PathTrackingMsg &msg, const Eigen::Vector2f &target_point);
 };

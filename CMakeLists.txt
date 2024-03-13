@@ -15,12 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
-
-message(STATUS "OpenCV library status:")
-message(STATUS "    version: ${OpenCV_VERSION}")
-message(STATUS "    libraries: ${OpenCV_LIBS}")
-message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
 catkin_package(
   CATKIN_DEPENDS sgtdv_msgs

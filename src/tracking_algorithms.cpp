@@ -20,7 +20,8 @@ TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle
 }
 
 #ifdef SGT_VISUALIZATION
-void TrackingAlgorithm::visualizePoint(const cv::Vec2f point, const int p_id, const std::string& ns, const cv::Vec3f color) const
+void TrackingAlgorithm::visualizePoint(const Eigen::Vector2f point, const int p_id, const std::string& ns, 
+  const Eigen::Vector3f color) const
 {
   visualization_msgs::Marker marker;
   
@@ -119,19 +120,19 @@ void PurePursuit::update(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &con
 {    
   computeRearWheelPos(msg.car_pose);
   computeLookAheadDist(msg.car_vel);
-  const cv::Vec2f target_point = findTargetPoint(msg.trajectory);
+  const Eigen::Vector2f target_point = findTargetPoint(msg.trajectory);
   control_msg->steering_angle = computeSteeringCommand(msg, target_point); 
   control_msg->speed = computeSpeedCommand(msg.car_vel->speed, control_msg->speed);
 }
 
 void PurePursuit::computeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &car_pose)
 {
-  const cv::Vec2f pos(car_pose->position.x, car_pose->position.y);
-  rear_wheels_pos_ = pos - cv::Vec2f(cosf(car_pose->yaw) * params_.rear_wheels_offset, sinf(car_pose->yaw)  * params_.rear_wheels_offset);
+  const Eigen::Vector2f pos(car_pose->position.x, car_pose->position.y);
+  rear_wheels_pos_ = pos - Eigen::Vector2f(cosf(car_pose->yaw) * params_.rear_wheels_offset, sinf(car_pose->yaw)  * params_.rear_wheels_offset);
 #ifdef SGT_VISUALIZATION
-  visualizePoint(rear_wheels_pos_, 2, "rear wheels" , cv::Vec3f(0.0, 0.0, 1.0));
-  const auto frontWheelsPos = pos + cv::Vec2f(cosf(car_pose->yaw) * params_.front_wheels_offset, sinf(car_pose->yaw)  * params_.front_wheels_offset);
-  visualizePoint(frontWheelsPos, 3, "front wheels" , cv::Vec3f(0.0, 0.0, 1.0));
+  visualizePoint(rear_wheels_pos_, 2, "rear wheels" , Eigen::Vector3f(0.0, 0.0, 1.0));
+  const auto frontWheelsPos = pos + Eigen::Vector2f(cosf(car_pose->yaw) * params_.front_wheels_offset, sinf(car_pose->yaw)  * params_.front_wheels_offset);
+  visualizePoint(frontWheelsPos, 3, "front wheels" , Eigen::Vector3f(0.0, 0.0, 1.0));
 #endif /* SGT_VISUALIZATION */
 }
 
@@ -152,7 +153,7 @@ void PurePursuit::computeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &car_v
   }
 }
 
-cv::Vec2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const
+Eigen::Vector2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const
 {
   const auto center_line_it  = std::min_element(trajectory->points.begin(), trajectory->points.end(),
                                               [&](const sgtdv_msgs::Point2D &a,
@@ -169,7 +170,7 @@ cv::Vec2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
 
   static int offset;
   static int next_idx = 0, prevIdx;
-  static cv::Vec2f target_point, next_point;
+  static Eigen::Vector2f target_point, next_point;
 
   offset = 0;
   target_point(0) = trajectory->points[center_line_idx].x;
@@ -188,7 +189,7 @@ cv::Vec2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     next_point(0) = trajectory->points[next_idx].x;
     next_point(1) = trajectory->points[next_idx].y;
 
-    if(cv::norm(rear_wheels_pos_ - next_point) < lookahead_dist_)
+    if((rear_wheels_pos_ - next_point).norm() < lookahead_dist_)
     {
       target_point = next_point;
       continue;
@@ -210,7 +211,7 @@ cv::Vec2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     );
     
     const auto bearing_vector = target_point - rear_wheels_pos_;
-    const auto d = cv::norm(bearing_vector);
+    const auto d = bearing_vector.norm();
     const auto theta = std::atan2(bearing_vector(1), bearing_vector(0));
     const auto gamma = M_PI - slope_angle + theta;
 
@@ -221,15 +222,15 @@ cv::Vec2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &t
     target_point(1) += sin(slope_angle) * x;
   }
 #ifdef SGT_VISUALIZATION
-  visualizePoint(target_point, 0, "target point", cv::Vec3f(1.0, 0.0, 0.0));
-  visualizePoint(cv::Vec2f(trajectory->points[center_line_idx].x, trajectory->points[center_line_idx].y), 1,
-    "closest point", cv::Vec3f(1.0, 1.0, 0.0));
+  visualizePoint(target_point, 0, "target point", Eigen::Vector3f(1.0, 0.0, 0.0));
+  visualizePoint(Eigen::Vector2f(trajectory->points[center_line_idx].x, trajectory->points[center_line_idx].y), 1,
+    "closest point", Eigen::Vector3f(1.0, 1.0, 0.0));
 #endif /* SGT_VISUALIZATION */
 
   return target_point;
 }
 
-float PurePursuit::computeSteeringCommand(const PathTrackingMsg &msg, const cv::Vec2f &target_point)
+float PurePursuit::computeSteeringCommand(const PathTrackingMsg &msg, const Eigen::Vector2f &target_point)
 {
   static float steering_angle = 0.0;
   const double theta = msg.car_pose->yaw;
