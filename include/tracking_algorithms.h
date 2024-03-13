@@ -63,14 +63,6 @@ public:
     params_ = params;
   };
   
-#ifdef SGT_VISUALIZATION
-  virtual void setVisualizationPublishers(const ros::Publisher &target_pub, const ros::Publisher &steering_pose_pub)
-  {
-    target_pub_ = target_pub;
-    steering_pose_pub_ = steering_pose_pub;
-  };
-#endif /* SGT_VISUALIZATION */
-
   virtual void setRefSpeed(const float ref_speed)
   {
     ref_speed_ = ref_speed;
@@ -82,7 +74,12 @@ public:
   };
 
 protected:
-  TrackingAlgorithm(const ros::NodeHandle &handle);
+  TrackingAlgorithm(const ros::NodeHandle &handle
+  #ifdef SGT_VISUALIZATION
+    , const ros::Publisher& target_pub
+    , const ros::Publisher& steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+  );
   ~TrackingAlgorithm() = default;
 
   virtual int8_t computeSpeedCommand(const float act_speed, const int8_t speed_cmd_prev);
@@ -91,10 +88,11 @@ protected:
   virtual void visualizePoint(const cv::Vec2f point, const int point_id, 
                               const std::string& ns, const cv::Vec3f color) const;
   virtual void visualizeSteering() const;
-#endif /* SGT_VISUALIZATION */
 
   ros::Publisher target_pub_;
   ros::Publisher steering_pose_pub_;
+#endif /* SGT_VISUALIZATION */
+
   Control control_;
   Params params_;
 
@@ -107,7 +105,12 @@ private:
 class PurePursuit : public TrackingAlgorithm
 {
 public:
-  PurePursuit(const ros::NodeHandle &handle);
+  PurePursuit(const ros::NodeHandle &handle
+  #ifdef SGT_VISUALIZATION
+    , const ros::Publisher& target_pub
+    , const ros::Publisher& steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+  );
   ~PurePursuit() = default;
 
   void update(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &control_msg) override;

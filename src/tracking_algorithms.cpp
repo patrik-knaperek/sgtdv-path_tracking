@@ -6,7 +6,16 @@
 
 #include "../include/tracking_algorithms.h"
 
-TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle)
+TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle
+#ifdef SGT_VISUALIZATION
+  , const ros::Publisher& target_pub
+  , const ros::Publisher& steering_pose_pub
+) :
+  target_pub_(target_pub),
+  steering_pose_pub_(steering_pose_pub)
+#else
+)
+#endif /* SGT_VISUALIZATION */
 {
     
 }
@@ -93,8 +102,17 @@ int8_t TrackingAlgorithm::computeSpeedCommand(const float act_speed, const int8_
   return static_cast<int8_t>(speed_cmd_act);
 }
 
-PurePursuit::PurePursuit(const ros::NodeHandle &handle) :
-  TrackingAlgorithm(handle)
+PurePursuit::PurePursuit(const ros::NodeHandle& handle
+  #ifdef SGT_VISUALIZATION
+    , const ros::Publisher& target_pub
+    , const ros::Publisher& steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+  ) :
+  TrackingAlgorithm(handle
+  #ifdef SGT_VISUALIZATION
+    , target_pub, steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+  )
 {
 
 }

@@ -23,23 +23,18 @@
 class PathTracking
 {
 public:
-  PathTracking(const ros::NodeHandle &handle);
+  PathTracking(const ros::NodeHandle &handle, const ros::Publisher& cmd_pub
+  #ifdef SGT_VISUALIZATION
+    , const ros::Publisher& target_pub
+    , const ros::Publisher& steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+  #ifdef SGT_DEBUG_STATE
+    , const ros::Publisher& vis_debug_pub
+  #endif /* SGT_DEBUG_STATE */
+  );
   ~PathTracking() = default;
 
   void loadParams(const ros::NodeHandle &handle) const;
-  void setCmdPublisher(const ros::Publisher &cmd_pub)
-  {
-    cmd_pub_ = cmd_pub;
-  };
-#ifdef SGT_VISUALIZATION
-  void setVisualizationPublishers(const ros::Publisher &target_pub, const ros::Publisher &steering_pose_pub)
-  {
-    algorithm_->setVisualizationPublishers(target_pub, steering_pose_pub);
-  };
-#endif /* SGT_VISUALIZATION */
-#ifdef SGT_DEBUG_STATE
-  void SetVisDebugPublisher(const ros::Publisher& publisher) { vis_debug_pub_ = publisher; };
-#endif
 
   void update(const PathTrackingMsg &msg);
   void stopVehicle();
@@ -50,8 +45,8 @@ public:
   }
 private:
   ros::NodeHandle handle_;
-  ros::Publisher cmd_pub_;
   TrackingAlgorithm *algorithm_;
+  ros::Publisher cmd_pub_;
   bool stopped_;
 
 #ifdef SGT_DEBUG_STATE

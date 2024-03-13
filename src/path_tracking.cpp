@@ -6,10 +6,27 @@
 
 #include "../include/path_tracking.h"
 
-PathTracking::PathTracking(const ros::NodeHandle &handle) :
-  handle_(handle),
-  algorithm_(new PurePursuit(handle)),
-  stopped_(true)
+PathTracking::PathTracking(const ros::NodeHandle &handle, const ros::Publisher& cmd_pub
+  #ifdef SGT_VISUALIZATION
+    , const ros::Publisher& target_pub
+    , const ros::Publisher& steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+  #ifdef SGT_DEBUG_STATE
+    , const ros::Publisher& vis_debug_pub
+  #endif /* SGT_DEBUG_STATE */
+  ) :
+    handle_(handle),
+    algorithm_(new PurePursuit(handle
+  #ifdef SGT_VISUALIZATION
+      , target_pub, steering_pose_pub
+  #endif /* SGT_VISUALIZATION */
+      )
+    ),
+    cmd_pub_(cmd_pub),
+    stopped_(true)
+  #ifdef SGT_DEBUG_STATE
+    , vis_debug_pub_(vis_debug_pub)
+  #endif /* SGT_DEBUG_STATE */
 {
   //algorithm_ = new Stanley(handle); // malfunctioning, needs fix
   loadParams(handle);
