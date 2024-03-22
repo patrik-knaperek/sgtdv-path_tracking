@@ -83,10 +83,12 @@ protected:
   ~TrackingAlgorithm() = default;
 
   virtual int8_t computeSpeedCommand(const float act_speed, const int8_t speed_cmd_prev);
+  size_t findClosestPointIdx(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory, 
+                            const Eigen::Ref<const Eigen::Vector2f>& pos) const;
 
 #ifdef SGT_VISUALIZATION
-  virtual void visualizePoint(const Eigen::Vector2f point, const int point_id, 
-                              const std::string& ns, const Eigen::Vector3f color) const;
+  virtual void visualizePoint(const Eigen::Ref<const Eigen::Vector2f>& point, const int point_id, 
+                              const std::string& ns, const Eigen::Ref<const Eigen::Vector3f> color) const;
   virtual void visualizeSteering() const;
 
   ros::Publisher target_pub_;
@@ -120,7 +122,7 @@ private:
   float lookahead_dist_;
 
   void computeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &car_pose);
-  void computeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &car_vel);
+  void computeLookAheadDist(const float speed);
   Eigen::Vector2f findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const;
-  float computeSteeringCommand(const PathTrackingMsg &msg, const Eigen::Vector2f &target_point);
+  float computeSteeringCommand(const PathTrackingMsg &msg, const Eigen::Ref<const Eigen::Vector2f>& target_point);
 };

@@ -19,45 +19,6 @@ TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle
 {
 }
 
-#ifdef SGT_VISUALIZATION
-void TrackingAlgorithm::visualizePoint(const Eigen::Vector2f point, const int p_id, const std::string& ns, 
-  const Eigen::Vector3f color) const
-{
-  visualization_msgs::Marker marker;
-  
-  marker.color.r              = color(0);
-  marker.color.g              = color(1);
-  marker.color.b              = color(2);
-  marker.color.a              = 1.0;
-  marker.pose.position.x      = point[0];
-  marker.pose.position.y      = point[1];
-  marker.pose.orientation.w   = 1.0;
-  marker.type                 = visualization_msgs::Marker::SPHERE;
-  marker.action               = visualization_msgs::Marker::ADD;
-  marker.id                   = p_id;
-  marker.ns                   = ns;
-  marker.scale.x              = 0.3;
-  marker.scale.y              = 0.3;
-  marker.scale.z              = 0.3;
-  marker.header.stamp         = ros::Time::now();
-  marker.header.frame_id      = "map";
-  target_pub_.publish(marker);
-}
-
-void TrackingAlgorithm::visualizeSteering() const
-{
-  geometry_msgs::PoseStamped steering_pose;
-  steering_pose.header.stamp = ros::Time::now();
-  steering_pose.header.frame_id = std::string("base_link");
-  steering_pose.pose.position.x  = params_.front_wheels_offset;
-
-  steering_pose.pose.orientation.z = sin((control_.steering_angle) / 2);
-  steering_pose.pose.orientation.w = cos((control_.steering_angle) / 2);
-
-  steering_pose_pub_.publish(steering_pose);
-}
-#endif /* SGT_VISUALIZATION */
-
 int8_t TrackingAlgorithm::computeSpeedCommand(const float act_speed, const int8_t speed_cmd_prev)
 {
   ROS_DEBUG_STREAM("ref speed: " << ref_speed_);
@@ -102,6 +63,65 @@ int8_t TrackingAlgorithm::computeSpeedCommand(const float act_speed, const int8_
   return static_cast<int8_t>(speed_cmd_act);
 }
 
+/// @brief Finds an index of the closest trajectory point to the reference position
+/// @param trajectory - array of the trajecotry points
+/// @param pos - reference position
+/// @return index of the trajectory point in the array
+size_t TrackingAlgorithm::findClosestPointIdx(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory, 
+                                              const Eigen::Ref<const Eigen::Vector2f>& pos) const
+{
+  const auto trajectory_it  = std::min_element(trajectory->points.begin(), trajectory->points.end(),
+                                              [&](const sgtdv_msgs::Point2D &a,
+                                              const sgtdv_msgs::Point2D &b) {
+                                              const double da = std::hypot(pos[0] - a.x,
+                                                                          pos[1] - a.y);
+                                              const double db = std::hypot(pos[0] - b.x,
+                                                                          pos[1] - b.y);
+
+                                              return da < db;
+                                              });
+  return std::distance(trajectory->points.begin(), trajectory_it);
+}
+
+#ifdef SGT_VISUALIZATION
+void TrackingAlgorithm::visualizePoint(const Eigen::Ref<const Eigen::Vector2f>& point, const int point_id, 
+                              const std::string& ns, const Eigen::Ref<const Eigen::Vector3f> color) const
+{
+  visualization_msgs::Marker marker;
+  
+  marker.color.r              = color(0);
+  marker.color.g              = color(1);
+  marker.color.b              = color(2);
+  marker.color.a              = 1.0;
+  marker.pose.position.x      = point[0];
+  marker.pose.position.y      = point[1];
+  marker.pose.orientation.w   = 1.0;
+  marker.type                 = visualization_msgs::Marker::SPHERE;
+  marker.action               = visualization_msgs::Marker::ADD;
+  marker.id                   = point_id;
+  marker.ns                   = ns;
+  marker.scale.x              = 0.3;
+  marker.scale.y              = 0.3;
+  marker.scale.z              = 0.3;
+  marker.header.stamp         = ros::Time::now();
+  marker.header.frame_id      = "map";
+  target_pub_.publish(marker);
+}
+
+void TrackingAlgorithm::visualizeSteering() const
+{
+  geometry_msgs::PoseStamped steering_pose;
+  steering_pose.header.stamp = ros::Time::now();
+  steering_pose.header.frame_id = std::string("base_link");
+  steering_pose.pose.position.x  = params_.front_wheels_offset;
+
+  steering_pose.pose.orientation.z = sin((control_.steering_angle) / 2);
+  steering_pose.pose.orientation.w = cos((control_.steering_angle) / 2);
+
+  steering_pose_pub_.publish(steering_pose);
+}
+#endif /* SGT_VISUALIZATION */
+
 PurePursuit::PurePursuit(const ros::NodeHandle& handle
   #ifdef SGT_VISUALIZATION
     , const ros::Publisher& target_pub
@@ -119,7 +139,7 @@ PurePursuit::PurePursuit(const ros::NodeHandle& handle
 void PurePursuit::update(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &control_msg)
 {    
   computeRearWheelPos(msg.car_pose);
-  computeLookAheadDist(msg.car_vel);
+  computeLookAheadDist(msg.car_vel->speed);
   const Eigen::Vector2f target_point = findTargetPoint(msg.trajectory);
   control_msg->steering_angle = computeSteeringCommand(msg, target_point); 
   control_msg->speed = computeSpeedCommand(msg.car_vel->speed, control_msg->speed);
@@ -128,17 +148,20 @@ void PurePursuit::update(const PathTrackingMsg &msg, sgtdv_msgs::ControlPtr &con
 void PurePursuit::computeRearWheelPos(const sgtdv_msgs::CarPose::ConstPtr &car_pose)
 {
   const Eigen::Vector2f pos(car_pose->position.x, car_pose->position.y);
-  rear_wheels_pos_ = pos - Eigen::Vector2f(cosf(car_pose->yaw) * params_.rear_wheels_offset, sinf(car_pose->yaw)  * params_.rear_wheels_offset);
+  rear_wheels_pos_ = pos - Eigen::Vector2f(cosf(car_pose->yaw) * params_.rear_wheels_offset, 
+                                          sinf(car_pose->yaw)  * params_.rear_wheels_offset);
 #ifdef SGT_VISUALIZATION
   visualizePoint(rear_wheels_pos_, 2, "rear wheels" , Eigen::Vector3f(0.0, 0.0, 1.0));
-  const auto frontWheelsPos = pos + Eigen::Vector2f(cosf(car_pose->yaw) * params_.front_wheels_offset, sinf(car_pose->yaw)  * params_.front_wheels_offset);
+  const Eigen::Vector2f frontWheelsPos = 
+    pos + Eigen::Vector2f(cosf(car_pose->yaw) * params_.front_wheels_offset,
+                          sinf(car_pose->yaw) * params_.front_wheels_offset);
   visualizePoint(frontWheelsPos, 3, "front wheels" , Eigen::Vector3f(0.0, 0.0, 1.0));
 #endif /* SGT_VISUALIZATION */
 }
 
-void PurePursuit::computeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &car_vel)
+void PurePursuit::computeLookAheadDist(const float speed)
 {
-  const float lookahead_dist = params_.steering_k * car_vel->speed;
+  const float lookahead_dist = params_.steering_k * speed;
   if(lookahead_dist < params_.lookahead_dist_min)
   {
     lookahead_dist_ = params_.lookahead_dist_min;
@@ -155,39 +178,28 @@ void PurePursuit::computeLookAheadDist(const sgtdv_msgs::CarVel::ConstPtr &car_v
 
 Eigen::Vector2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::ConstPtr &trajectory) const
 {
-  const auto center_line_it  = std::min_element(trajectory->points.begin(), trajectory->points.end(),
-                                              [&](const sgtdv_msgs::Point2D &a,
-                                              const sgtdv_msgs::Point2D &b) {
-                                              const double da = std::hypot(rear_wheels_pos_[0] - a.x,
-                                                                          rear_wheels_pos_[1] - a.y);
-                                              const double db = std::hypot(rear_wheels_pos_[0] - b.x,
-                                                                          rear_wheels_pos_[1] - b.y);
-
-                                              return da < db;
-                                              });
-  const auto center_line_idx = std::distance(trajectory->points.begin(), center_line_it);
-  const auto size          = trajectory->points.size();
-
-  static int offset;
-  static int next_idx = 0, prevIdx;
+  const auto size = trajectory->points.size();
   static Eigen::Vector2f target_point, next_point;
 
-  offset = 0;
-  target_point(0) = trajectory->points[center_line_idx].x;
-  target_point(1) = trajectory->points[center_line_idx].y;
+  const auto closest_idx = findClosestPointIdx(trajectory, rear_wheels_pos_);
+
+  int offset(0), next_idx;
+  target_point << trajectory->points[closest_idx].x,
+                  trajectory->points[closest_idx].y;
+  
   while(true)
   {
     if(!params_.track_loop)
     {
-      next_idx = (center_line_idx + offset++);
+      next_idx = (closest_idx + offset++);
       if(next_idx > size - 1) break;
     }
     else
     {
-      next_idx = (center_line_idx + offset++) % size;
+      next_idx = (closest_idx + offset++) % size;
     }
-    next_point(0) = trajectory->points[next_idx].x;
-    next_point(1) = trajectory->points[next_idx].y;
+    next_point << trajectory->points[next_idx].x,
+                  trajectory->points[next_idx].y;
 
     if((rear_wheels_pos_ - next_point).norm() < lookahead_dist_)
     {
@@ -216,21 +228,22 @@ Eigen::Vector2f PurePursuit::findTargetPoint(const sgtdv_msgs::Point2DArr::Const
     const auto gamma = M_PI - slope_angle + theta;
 
     const auto x = 
-      d * cos(gamma) + sqrt(std::pow(d,2) * std::pow(cos(gamma),2) - std::pow(d,2) + std::pow(lookahead_dist_,2));
+      d * cos(gamma) + std::sqrt(std::pow(d,2) * std::pow(cos(gamma),2) - std::pow(d,2) + std::pow(lookahead_dist_,2));
 
-    target_point(0) += cos(slope_angle) * x;
+    target_point(0) += cos(slope_angle) * x,
     target_point(1) += sin(slope_angle) * x;
   }
 #ifdef SGT_VISUALIZATION
   visualizePoint(target_point, 0, "target point", Eigen::Vector3f(1.0, 0.0, 0.0));
-  visualizePoint(Eigen::Vector2f(trajectory->points[center_line_idx].x, trajectory->points[center_line_idx].y), 1,
+  visualizePoint(Eigen::Vector2f(trajectory->points[closest_idx].x, trajectory->points[closest_idx].y), 1,
     "closest point", Eigen::Vector3f(1.0, 1.0, 0.0));
 #endif /* SGT_VISUALIZATION */
 
   return target_point;
 }
 
-float PurePursuit::computeSteeringCommand(const PathTrackingMsg &msg, const Eigen::Vector2f &target_point)
+float PurePursuit::computeSteeringCommand(const PathTrackingMsg &msg,
+                                          const Eigen::Ref<const Eigen::Vector2f>& target_point)
 {
   static float steering_angle = 0.0;
   const double theta = msg.car_pose->yaw;
@@ -239,14 +252,7 @@ float PurePursuit::computeSteeringCommand(const PathTrackingMsg &msg, const Eige
   steering_angle = static_cast<float>(std::atan2(2*std::sin(alpha)*params_.car_length,lookahead_dist_));
 
   // saturation
-  if(steering_angle > params_.steering_max)
-  {
-    steering_angle = params_.steering_max;
-  }
-  else if(steering_angle < params_.steering_min)
-  {
-    steering_angle = params_.steering_min;
-  }
+  steering_angle = std::max(params_.steering_min, std::min(params_.steering_max, steering_angle));
 
 #ifdef SGT_VISUALIZATION
   visualizeSteering();
