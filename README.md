@@ -6,38 +6,68 @@ ___
 
 **Authors:** Tereza Ábelová, Juraj Krasňanský, Patrik Knaperek
 
-**Objective:** Computing control values for motors and steering actuator based on planned trajectory and vehicle state.
+**Objective:** Computing control commands for speed (throttle/brake) and steering angle based on planned trajectory and vehicle state.
 
 ___
 
-[Pure Pursuit](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link) steering control algorithm is implemented. Stanley algorithm implementation is not working. For speed control, a simple discrete PI regulator with ramp is implemented. Constant reference speed is given as a parameter. Tested with FSSIM and RC car.
+The pathtracking task is divided into two: steering control and speed control.
+
+For steering control, [Pure Pursuit](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link) algorithm is implemented. For speed control, a simple discrete PI regulator (with ramp) is implemented. Constant reference speed is given as a parameter.
+
+Tested with FSSIM and RC car.
 
 ### Related packages
-* `path_planning`
-* `ptp_trajectory`
-* `control_si`
-* `racecar-interface`
+* [`path_planning`](../path_planning/README.md)
+* [`ptp_trajectory`](../ptp_trajectory/README.md)
+* [`control_si`](../simulation_interface/control_si/README.md)
 * `jetson_can_interface`
+* `racecar-interface`
+
+## ROS Interface
+
+### Subscribed topics
+* `pathplanning_trajectory`[`[sgtdv_msgs/Point2DArr]`](../sgtdv_msgs/msg/Point2DArr.msg) - reference trajectory array
+* `pose_estimate`[`[sgtdv_msgs/CarPose]`](../sgtdv_msgs/msg/CarPose.msg) - current pose in the global coordinate system
+* `velocity_estimate`[`[sgtdv_msgs/CarVel]`](../sgtdv_msgs/msg/CarVel.msg) - current velocity in the base coordinate system
+
+### Published topics
+* `pathtracking_commands`[`[sgtdv_msgs/Control]`](../sgtdv_msgs/msg/Control.msg) - speed and steering control command
+Optional
+* `pathtracking/visualize/pure_pursuit`[`[visualization_msgs/Marker]`](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/Marker.html) - visualization significant points for PP algorithm: target (lookahead) point, the closest trajectory point to the rear axle, rear axle position, front axle position
+* `pathtracking/visualize/steering`[`[geometry_msgs/PoseStamped]`](https://docs.ros2.org/latest/api/geometry_msgs/msg/PoseStamped.html) - visualization of the desired steering pose (rotation)
+* `pathtracking_debug_state`[`[sgtdv_msgs/DebugState]`](../sgtdv_msgs/msg/DebugState.msg) - debug visualization data
+
+### Advertised services
+* `path_tracking/start`[`[std_srvs/Empty]`](http://docs.ros.org/en/noetic/api/std_srvs/html/srv/Empty.html) - "start moving" command → speed command given by the speed controller
+* `path_tracking/stop`[`[std_srvs/Empty]`](http://docs.ros.org/en/noetic/api/std_srvs/html/srv/Empty.html) - "stop moving" command → speed command equals zero
+* `path_tracking/set_speed`[`[sgtdv_msgs/Float32Srv]`](../sgtdv_msgs/srv/Float32Srv.srv) - set the reference speed
 
 ## Compilation
 ```sh
-$ cd <path_to_SGT_workspace>/ros_implementation
+$ cd ${SGT_ROOT}/ros_implementation
 $ catkin build path_tracking
 ```
 
 ### Compilation configuration
 * [`SGT_Macros.h`](../SGT_Macros.h)
-	* `SGT_VISUALIZE` : publish intermediate calculations on visualizable topics
-        - `/pathtracking/visualize/target [visualization_msgs/Marker]` - lookahead (target) point, rear wheelbase position,  closest trajectory point
+	* `SGT_VISUALIZATION` : publish intermediate calculations on visualizable topics
+        - `/pathtracking/visualize/target [visualization_msgs/Marker]` - lookahead (target) point, closest trajectory point, rear wheelbase position, front wheelbase position
         - `/pathtracking/visualize/steering [geometry_msgs/PoseStamped]` - steering angle command
 
 ## Launch
 ```sh
-$ source <path_to_SGT_workspace>/ros_implementation/devel/setup.bash
+$ source ${SGT_ROOT}/ros_implementation/devel/setup.bash
 $ roslaunch path_tracking path_tracking.launch
 ```
+To start driving, the trajectory, pose and velocity topics must be active. In a new terminal run
+```sh
+$ source ${SGT_ROOT}/ros_implementation/devel/setup.bash
+$ rosservice call /path_tracking/set_speed "data: X.Y"
+$ rosservice call /path_tracking/start "{}"
+```
+
 ### Launch with FSSIM 
-([Requires AMZ FSD skeleton & FSSIM installed](https://gitlab.com/sgt-driverless/simulation/fsd_skeleton/-/blob/sgt-noetic-devel/SGT-DV_install_man.md))
+([Requires AMZ FSD skeleton & FSSIM installed and launched](https://gitlab.com/sgt-driverless/simulation/fsd_skeleton/-/blob/sgt-noetic-devel/SGT-DV_install_man.md))
 ```sh
 $ roslaunch control_si control_si
 ```
@@ -63,7 +93,7 @@ $ ./start.bash
 * may be used for tunning:
     - `controller/speed/p` : P gain of speed controller
     - `controller/speed/i` : I gain of speed controller
-    - `controller/speed/ref_speed` : constant reference speed
+    <!-- - `controller/speed/ref_speed` : constant reference speed -->
     - `controller/speed/speed_raise_rate` : maximum frequency of speed control output increment
     - `controller/steering/k` : ref. to the equation in the [Section 2.2.1](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link)
     - `controller/steering/lookahead_dist_min`,  `controller/steering/lookahead_dist_max`: range of look-ahead distance, ref. to [Figure 10](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link)
