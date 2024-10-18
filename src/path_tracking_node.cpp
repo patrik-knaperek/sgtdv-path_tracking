@@ -3,7 +3,7 @@
 /* Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
-#include "../include/path_tracking_synch.h"
+#include "path_tracking_synch.h"
 
 int main (int argc, char** argv)
 {

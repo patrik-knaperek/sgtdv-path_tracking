@@ -3,8 +3,12 @@
 /* Authors: Tereza Ábelová, Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
+/* ROS */
+#include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 
-#include "../include/tracking_algorithms.h"
+/* Header */
+#include "tracking_algorithms.h"
 
 TrackingAlgorithm::TrackingAlgorithm(const ros::NodeHandle &handle
 #ifdef SGT_VISUALIZATION

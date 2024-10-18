@@ -6,22 +6,18 @@
 #pragma once
 
 /* C++ */
-#include <cmath>
 #include <Eigen/Eigen>
 
 /* ROS */
 #include <ros/ros.h>
-#include <visualization_msgs/Marker.h>
-#include <geometry_msgs/PoseStamped.h>
 
-/* SGT */
-#include <sgtdv_msgs/Point2D.h>
+/* SGT-DV */
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
 #include <sgtdv_msgs/CarVel.h>
 #include <sgtdv_msgs/Control.h>
-#include "../../SGT_Macros.h"
-#include "../include/messages.h"
+#include "SGT_Macros.h"
+#include "messages.h"
 
 constexpr float FPS = 60.f;
 constexpr float TIME_PER_FRAME = 1.f / FPS;

@@ -3,8 +3,12 @@
 /* Authors: Tereza Ábelová, Juraj Krasňanský
 /*****************************************************/
 
+/* SGT-DV */
+#include "SGT_Utils.h"
+#include <sgtdv_msgs/DebugState.h>
 
-#include "../include/path_tracking.h"
+/* Header */
+#include "path_tracking.h"
 
 PathTracking::PathTracking(const ros::NodeHandle &handle, const ros::Publisher& cmd_pub
   #ifdef SGT_VISUALIZATION

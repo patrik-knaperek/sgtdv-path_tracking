@@ -21,9 +21,11 @@ catkin_package(
 )
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/../
 )
 
 add_executable(${PROJECT_NAME} src/path_tracking_node.cpp src/path_tracking.cpp src/path_tracking_synch.cpp src/tracking_algorithms.cpp)

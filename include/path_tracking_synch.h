@@ -5,33 +5,32 @@
 
 /* ROS */
 #include <ros/ros.h>
-#include <std_msgs/Empty.h>
 #include <std_srvs/Empty.h>
 
-/* SGT */
+/* SGT-DV */
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
 #include <sgtdv_msgs/CarVel.h>
 #include <sgtdv_msgs/Float32Srv.h>
-#include "../include/messages.h"
-#include "../include/path_tracking.h"
+#include "messages.h"
+#include "path_tracking.h"
 
 class PathTrackingSynch
 {
 public:
-  PathTrackingSynch(ros::NodeHandle& handle);
+  explicit PathTrackingSynch(ros::NodeHandle& handle);
   ~PathTrackingSynch() = default;
   
+  void update();
+
+private:
   void trajectoryCallback(const sgtdv_msgs::Point2DArr::ConstPtr &msg);
   void poseCallback(const sgtdv_msgs::CarPose::ConstPtr &msg);
   void velocityCallback(const sgtdv_msgs::CarVel::ConstPtr &msg);
   bool stopCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
   bool startCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
   bool setSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &res);
-  
-  void update();
 
-private:
   PathTracking path_tracking_obj_;
   PathTrackingMsg path_tracking_msg_;
 

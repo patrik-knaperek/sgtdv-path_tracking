@@ -5,20 +5,13 @@
 
 #pragma once
 
-/* C++ */
-#include <chrono>
-
 /* ROS */
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
 
-/* SGT */
+/* SGT-DV */
 #include <sgtdv_msgs/PathTrackingMsg.h>
 #include <sgtdv_msgs/Control.h>
-#include "../include/messages.h"
-#include "../include/tracking_algorithms.h"
-#include <sgtdv_msgs/DebugState.h>
-#include "../../SGT_Utils.h"
+#include "tracking_algorithms.h"
 
 class PathTracking
 {

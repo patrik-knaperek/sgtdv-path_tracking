@@ -3,8 +3,15 @@
 /* Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
+/* ROS */
+#include <geometry_msgs/PoseStamped.h>
+#include <visualization_msgs/Marker.h>
 
-#include "../include/path_tracking_synch.h"
+/* SGT-DV */
+#include <sgtdv_msgs/DebugState.h>
+
+/* Header */
+#include "path_tracking_synch.h"
 
 PathTrackingSynch::PathTrackingSynch(ros::NodeHandle& handle) :
   /* ROS interface init */
