@@ -15,24 +15,20 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
-
-message(STATUS "OpenCV library status:")
-message(STATUS "    version: ${OpenCV_VERSION}")
-message(STATUS "    libraries: ${OpenCV_LIBS}")
-message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
 catkin_package(
   CATKIN_DEPENDS sgtdv_msgs
 )
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/../
 )
 
-add_executable(${PROJECT_NAME} src/PathTrackingNODE.cpp src/PathTracking.cpp src/PathTrackingSynch.cpp src/TrackingAlgorithms.cpp)
+add_executable(${PROJECT_NAME} src/path_tracking_node.cpp src/path_tracking_ros.cpp src/path_tracking.cpp)
 
 target_link_libraries(path_tracking
   ${catkin_LIBRARIES}
