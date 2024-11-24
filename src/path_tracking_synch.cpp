@@ -16,21 +16,21 @@
 PathTrackingSynch::PathTrackingSynch(ros::NodeHandle& handle) :
   /* ROS interface init */
   path_tracking_obj_(handle,
-    handle.advertise<sgtdv_msgs::Control>("pathtracking_commands", 1)
+    handle.advertise<sgtdv_msgs::Control>("path_tracking/cmd", 1)
   #ifdef SGT_VISUALIZATION
-    , handle.advertise<visualization_msgs::Marker>("pathtracking/visualize/pure_pursuit",4)
-    , handle.advertise<geometry_msgs::PoseStamped>("pathtracking/visualize/steering", 1)
+    , handle.advertise<visualization_msgs::Marker>("path_tracking/visualize/pure_pursuit",4)
+    , handle.advertise<geometry_msgs::PoseStamped>("path_tracking/visualize/steering", 1)
   #endif /* SGT_VISUALIZATION */
   #ifdef SGT_DEBUG_STATE
-    , handle.advertise<sgtdv_msgs::DebugState>("pathtracking_debug_state", 2)
+    , handle.advertise<sgtdv_msgs::DebugState>("path_tracking/debug_state", 2)
   #endif /* SGT_DEBUG_STATE */
     ),
-    trajectory_sub_(handle.subscribe("pathplanning_trajectory", 1, &PathTrackingSynch::trajectoryCallback, this)),
-    pose_sub_(handle.subscribe("pose_estimate", 1, &PathTrackingSynch::poseCallback, this)),
+    trajectory_sub_(handle.subscribe("path_planning/trajectory", 1, &PathTrackingSynch::trajectoryCallback, this)),
+    pose_sub_(handle.subscribe("odometry/pose", 1, &PathTrackingSynch::poseCallback, this)),
   // pose_sub_(handle.subscribe("slam/pose", 1, &PathTrackingSynch::poseCallback, this)),
-  velocity_sub_(handle.subscribe("velocity_estimate", 1, &PathTrackingSynch::velocityCallback, this)),
-  stop_sub_(handle.advertiseService("path_tracking/stop", &PathTrackingSynch::stopCallback, this)),
-  start_sub_(handle.advertiseService("path_tracking/start", &PathTrackingSynch::startCallback, this)),
+  velocity_sub_(handle.subscribe("odometry/velocity", 1, &PathTrackingSynch::velocityCallback, this)),
+  stop_server_(handle.advertiseService("path_tracking/stop", &PathTrackingSynch::stopCallback, this)),
+  start_server_(handle.advertiseService("path_tracking/start", &PathTrackingSynch::startCallback, this)),
   set_speed_server_(handle.advertiseService("path_tracking/set_speed", &PathTrackingSynch::setSpeedCallback, this)),
 
   trajectory_ready_(false),

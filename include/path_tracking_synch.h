@@ -37,8 +37,8 @@ private:
   ros::Subscriber trajectory_sub_;
   ros::Subscriber pose_sub_;
   ros::Subscriber velocity_sub_;
-  ros::ServiceServer stop_sub_;
-  ros::ServiceServer start_sub_;
+  ros::ServiceServer stop_server_;
+  ros::ServiceServer start_server_;
   ros::ServiceServer set_speed_server_;
 
   bool trajectory_ready_;

@@ -10,7 +10,7 @@ ___
 
 ___
 
-The pathtracking task is divided into two: steering control and speed control.
+The path-tracking task is divided into two: steering control and speed control.
 
 For steering control, [Pure Pursuit](https://drive.google.com/file/d/1ObsUo9i07dW73RavOTAYJBq5Mh6H2AWu/view?usp=share_link) algorithm is implemented. For speed control, a simple discrete PI regulator (with ramp) is implemented. Constant reference speed is given as a parameter.
 
@@ -26,16 +26,16 @@ Tested with FSSIM and RC car.
 ## ROS Interface
 
 ### Subscribed topics
-* `pathplanning_trajectory`[`[sgtdv_msgs/Point2DArr]`](../sgtdv_msgs/msg/Point2DArr.msg) - reference trajectory array
-* `pose_estimate`[`[sgtdv_msgs/CarPose]`](../sgtdv_msgs/msg/CarPose.msg) - current pose in the global coordinate system
-* `velocity_estimate`[`[sgtdv_msgs/CarVel]`](../sgtdv_msgs/msg/CarVel.msg) - current velocity in the base coordinate system
+* `path_planning/trajectory`[`[sgtdv_msgs/Point2DArr]`](../sgtdv_msgs/msg/Point2DArr.msg) - reference trajectory array
+* `odometry/pose`[`[sgtdv_msgs/CarPose]`](../sgtdv_msgs/msg/CarPose.msg) - current pose in the global coordinate system
+* `odometry/velocity`[`[sgtdv_msgs/CarVel]`](../sgtdv_msgs/msg/CarVel.msg) - current velocity in the base coordinate system
 
 ### Published topics
-* `pathtracking_commands`[`[sgtdv_msgs/Control]`](../sgtdv_msgs/msg/Control.msg) - speed and steering control command
+* `path_tracking/cmd`[`[sgtdv_msgs/Control]`](../sgtdv_msgs/msg/Control.msg) - speed and steering control command
 Optional
-* `pathtracking/visualize/pure_pursuit`[`[visualization_msgs/Marker]`](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/Marker.html) - visualization significant points for PP algorithm: target (lookahead) point, the closest trajectory point to the rear axle, rear axle position, front axle position
-* `pathtracking/visualize/steering`[`[geometry_msgs/PoseStamped]`](https://docs.ros2.org/latest/api/geometry_msgs/msg/PoseStamped.html) - visualization of the desired steering pose (rotation)
-* `pathtracking_debug_state`[`[sgtdv_msgs/DebugState]`](../sgtdv_msgs/msg/DebugState.msg) - debug visualization data
+* `path_tracking/visualize/pure_pursuit`[`[visualization_msgs/Marker]`](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/Marker.html) - visualization significant points for PP algorithm: target (lookahead) point, the closest trajectory point to the rear axle, rear axle position, front axle position
+* `path_tracking/visualize/steering`[`[geometry_msgs/PoseStamped]`](https://docs.ros2.org/latest/api/geometry_msgs/msg/PoseStamped.html) - visualization of the desired steering pose (rotation)
+* `path_tracking/debug_state`[`[sgtdv_msgs/DebugState]`](../sgtdv_msgs/msg/DebugState.msg) - debug visualization data
 
 ### Advertised services
 * `path_tracking/start`[`[std_srvs/Empty]`](http://docs.ros.org/en/noetic/api/std_srvs/html/srv/Empty.html) - "start moving" command → speed command given by the speed controller
@@ -51,8 +51,8 @@ $ catkin build path_tracking
 ### Compilation configuration
 * [`SGT_Macros.h`](../SGT_Macros.h)
 	* `SGT_VISUALIZATION` : publish intermediate calculations on visualizable topics
-        - `/pathtracking/visualize/target [visualization_msgs/Marker]` - lookahead (target) point, closest trajectory point, rear wheelbase position, front wheelbase position
-        - `/pathtracking/visualize/steering [geometry_msgs/PoseStamped]` - steering angle command
+        - `/path_tracking/visualize/target [visualization_msgs/Marker]` - lookahead (target) point, closest trajectory point, rear wheelbase position, front wheelbase position
+        - `/path_tracking/visualize/steering [geometry_msgs/PoseStamped]` - steering angle command
 
 ## Launch
 ```sh
