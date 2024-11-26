@@ -3,19 +3,19 @@
 /* Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
-#include "path_tracking_synch.h"
+#include "path_tracking_ros.h"
 
 int main (int argc, char** argv)
 {
   ros::init(argc, argv, "path_tracking");
   ros::NodeHandle handle;
-  PathTrackingSynch synch_obj(handle);
+  PathTrackingROS ros_obj(handle);
 
   ros::Rate looprate(FPS);
   while(ros::ok())
   {
     ros::spinOnce();
-    synch_obj.update();
+    ros_obj.update();
     looprate.sleep();
   }
 
