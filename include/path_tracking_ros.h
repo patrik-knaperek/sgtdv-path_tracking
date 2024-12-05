@@ -3,16 +3,20 @@
 /* Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
-/* ROS */
-#include <ros/ros.h>
-#include <std_srvs/Empty.h>
-
 /* SGT-DV */
 #include <sgtdv_msgs/Point2DArr.h>
 #include <sgtdv_msgs/CarPose.h>
 #include <sgtdv_msgs/CarVel.h>
 #include <sgtdv_msgs/Float32Srv.h>
 #include "path_tracking.h"
+
+/* ROS */
+#include <ros/ros.h>
+#include <std_srvs/Empty.h>
+
+#ifdef SGT_VISUALIZATION
+  #include <visualization_msgs/MarkerArray.h>
+#endif
 
 class PathTrackingROS
 {
@@ -33,8 +37,9 @@ private:
   bool setSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &res);
 
   #ifdef SGT_VISUALIZATION
-  void visualizePoint(const Eigen::Vector2f& point, const int point_id, 
-                      const std::string& ns, const Eigen::Vector3f color) const;
+  void initPurePursuitMarkers(void);
+  void initMarker(const int point_id, const std::string& ns, const Eigen::Vector3f color);
+  void visualizePoint(const Eigen::Vector2f& point, const int point_id);
 #endif /* SGT_VISUALIZATION */
 
   ros::NodeHandle handle_;
@@ -44,6 +49,7 @@ private:
 
   ros::Publisher cmd_pub_;
 #ifdef SGT_VISUALIZATION
+  visualization_msgs::MarkerArray pure_pursuit_vis_msg_;
   ros::Publisher pure_pursuit_vis_pub_;
   ros::Publisher steering_vis_pub_;
 #endif /* SGT_VISUALIZATION */
