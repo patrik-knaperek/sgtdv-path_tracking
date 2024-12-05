@@ -5,15 +5,11 @@
 
 #include "path_tracking.h"
 
-sgtdv_msgs::Control PathTracking::update(const sgtdv_msgs::PathTrackingMsg &msg)
-{    
-  sgtdv_msgs::Control control_msg;
-  
-  control_msg.steering_angle = computeSteeringCommand(msg);
+void PathTracking::update(const sgtdv_msgs::PathTrackingMsg &msg, sgtdv_msgs::Control *cmd)
+{      
+  cmd->steering_angle = computeSteeringCommand(msg, cmd->steering_angle);
 
-  control_msg.speed = computeSpeedCommand(msg.car_vel.speed, control_msg.speed);
-
-  return control_msg;
+  cmd->speed = computeSpeedCommand(msg.car_vel.speed, cmd->speed);
 }
 
 
@@ -61,22 +57,24 @@ int8_t PathTracking::computeSpeedCommand(const float act_speed, const int8_t spe
   return static_cast<int8_t>(speed_cmd_act);
 }
 
-float PathTracking::computeSteeringCommand(const sgtdv_msgs::PathTrackingMsg &msg)
+float PathTracking::computeSteeringCommand(const sgtdv_msgs::PathTrackingMsg &msg, const float steer_cmd_prev)
 {
   const auto lookahead_dist = computeLookAheadDist(msg.car_vel.speed);
   
   const Eigen::Vector2f target_point 
     = findTargetPoint(msg.trajectory, computeRearAxlePos(msg.car_pose), lookahead_dist);
   
-  static float steering_angle = 0.0;
   const double theta = msg.car_pose.yaw;
   const double alpha 
     = std::atan2((target_point[1] - msg.car_pose.position.y), (target_point[0] - msg.car_pose.position.x)) - theta;
-  steering_angle = static_cast<float>(std::atan2(2*std::sin(alpha)*params_.car_length,lookahead_dist));
+  float steering_angle = static_cast<float>(std::atan2(2*std::sin(alpha)*params_.car_length,lookahead_dist));
 
-  // saturation
+  /* low-pass filter */
+  steering_angle = params_.steering_smooth * steering_angle + (1- params_.steering_smooth) * steer_cmd_prev;
+
+  /* saturation */
   steering_angle = std::max(params_.steering.min, std::min(params_.steering.max, steering_angle));
-
+  
   return steering_angle;
 }
 

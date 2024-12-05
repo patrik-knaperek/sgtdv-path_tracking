@@ -59,6 +59,7 @@ void PathTrackingROS::loadParams(void)
   // Utils::loadParam(handle_, "/controller/speed/ref_speed", &params.refSpeed);
   Utils::loadParam(handle_, "/controller/speed/speed_raise_rate", &params.speed_raise_rate);
   Utils::loadParam(handle_, "/controller/steering/k", &params.steering_k);
+  Utils::loadParam(handle_, "/controller/steering/smooth", &params.steering_smooth);
   Utils::loadParam(handle_, "/controller/steering/min", &params.steering.min);
   Utils::loadParam(handle_, "/controller/steering/max", &params.steering.max);
   Utils::loadParam(handle_, "/controller/steering/lookahead_dist_min", &params.lookahead_dist.min);
@@ -133,7 +134,7 @@ void PathTrackingROS::update(void)
     }
     else
     {
-      control_msg = path_tracking_obj_.update(path_tracking_msg_);
+      path_tracking_obj_.update(path_tracking_msg_, &control_msg);
 
     #ifdef SGT_VISUALIZATION
       const auto pp_points = path_tracking_obj_.getPurePursuitPoints();

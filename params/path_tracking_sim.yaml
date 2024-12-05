@@ -13,10 +13,11 @@ controller:
     # ref_speed: 1.5
     speed_raise_rate: 20
   steering:
-    k: 1.1
-    min: -0.5
-    max: 0.5
-    lookahead_dist_min: 2.4
-    lookahead_dist_max: 6
+    k: 1.1                  # Pure Pursuit gain
+    smooth: 0.05            # [float from 0 (full filter) to 1 (no filter)] LP filter smoothing factor
+    min: -0.5               # [rad]
+    max: 0.5                # [rad]
+    lookahead_dist_min: 2.4 # [m]
+    lookahead_dist_max: 6   # [m]
 
 track_loop: true
