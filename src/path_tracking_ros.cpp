@@ -3,22 +3,23 @@
 /* Authors: Juraj Krasňanský, Patrik Knaperek
 /*****************************************************/
 
-/* ROS */
-#include <geometry_msgs/PoseStamped.h>
-#include <visualization_msgs/Marker.h>
-
-/* SGT-DV */
-#include <sgtdv_msgs/DebugState.h>
-
 /* Header */
 #include "path_tracking_ros.h"
+
+/* ROS */
+#include <geometry_msgs/PoseStamped.h>
+
+/* SGT-DV */
+#ifdef SGT_DEBUG_STATE
+  #include <sgtdv_msgs/DebugState.h>
+#endif
 
 PathTrackingROS::PathTrackingROS(ros::NodeHandle& handle)
   /* ROS interface init */
     : handle_(handle)
     , cmd_pub_(handle.advertise<sgtdv_msgs::Control>("path_tracking/cmd", 1))
   #ifdef SGT_VISUALIZATION
-    , pure_pursuit_vis_pub_(handle.advertise<visualization_msgs::Marker>("path_tracking/visualize/pure_pursuit",4))
+    , pure_pursuit_vis_pub_(handle.advertise<visualization_msgs::MarkerArray>("path_tracking/visualize/pure_pursuit",4))
     , steering_vis_pub_(handle.advertise<geometry_msgs::PoseStamped>("path_tracking/visualize/steering", 1))
   #endif /* SGT_VISUALIZATION */
   #ifdef SGT_DEBUG_STATE
@@ -34,6 +35,10 @@ PathTrackingROS::PathTrackingROS(ros::NodeHandle& handle)
     , set_speed_server_(handle.advertiseService("path_tracking/set_speed", &PathTrackingROS::setSpeedCallback, this))
 {
   loadParams();
+
+#ifdef SGT_VISUALIZATION
+  initPurePursuitMarkers();
+#endif
 }
 
 void PathTrackingROS::loadParams(void)
@@ -132,12 +137,13 @@ void PathTrackingROS::update(void)
 
     #ifdef SGT_VISUALIZATION
       const auto pp_points = path_tracking_obj_.getPurePursuitPoints();
-      visualizePoint(pp_points.first, 0, "target point", Eigen::Vector3f(1.0, 0.0, 0.0));
-      visualizePoint(pp_points.second, 1, "closest point", Eigen::Vector3f(1.0, 1.0, 0.0));
+      visualizePoint(pp_points.first, 0); // target point
+      visualizePoint(pp_points.second, 1);  // closest trajectory point
 
       const auto axle_pos = path_tracking_obj_.getAxlePositions();
-      visualizePoint(axle_pos.first, 2, "rear axle" , Eigen::Vector3f(0.0, 0.0, 1.0));
-      visualizePoint(axle_pos.second, 3, "front axle" , Eigen::Vector3f(0.0, 0.0, 1.0));
+      visualizePoint(axle_pos.first, 2);  // rear axle position
+      visualizePoint(axle_pos.second, 3); // front axle position
+      pure_pursuit_vis_pub_.publish(pure_pursuit_vis_msg_);
     #endif /* SGT_VISUALIZATION */
     }
 
@@ -155,8 +161,16 @@ void PathTrackingROS::update(void)
 }
 
 #ifdef SGT_VISUALIZATION
-void PathTrackingROS::visualizePoint(const Eigen::Vector2f& point, const int point_id, 
-                                    const std::string& ns, const Eigen::Vector3f color) const
+void PathTrackingROS::initPurePursuitMarkers(void)
+{
+  pure_pursuit_vis_msg_.markers.reserve(4);
+  initMarker(0, "target point", Eigen::Vector3f(1.0, 0.0, 0.0));
+  initMarker(1, "closest point", Eigen::Vector3f(1.0, 1.0, 0.0));
+  initMarker(2, "rear axle" , Eigen::Vector3f(0.0, 0.0, 1.0));
+  initMarker(3, "front axle" , Eigen::Vector3f(0.0, 0.0, 1.0));
+}
+
+void PathTrackingROS::initMarker(const int point_id, const std::string& ns, const Eigen::Vector3f color)
 {
   visualization_msgs::Marker marker;
   
@@ -164,8 +178,6 @@ void PathTrackingROS::visualizePoint(const Eigen::Vector2f& point, const int poi
   marker.color.g              = color(1);
   marker.color.b              = color(2);
   marker.color.a              = 1.0;
-  marker.pose.position.x      = point(0);
-  marker.pose.position.y      = point(1);
   marker.pose.orientation.w   = 1.0;
   marker.type                 = visualization_msgs::Marker::SPHERE;
   marker.action               = visualization_msgs::Marker::ADD;
@@ -174,8 +186,13 @@ void PathTrackingROS::visualizePoint(const Eigen::Vector2f& point, const int poi
   marker.scale.x              = 0.3;
   marker.scale.y              = 0.3;
   marker.scale.z              = 0.3;
-  marker.header.stamp         = ros::Time::now();
   marker.header.frame_id      = "map";
-  pure_pursuit_vis_pub_.publish(marker);
+  pure_pursuit_vis_msg_.markers.emplace_back(marker);
+}
+void PathTrackingROS::visualizePoint(const Eigen::Vector2f& point, const int point_id)
+{
+  pure_pursuit_vis_msg_.markers.at(point_id).pose.position.x      = point(0);
+  pure_pursuit_vis_msg_.markers.at(point_id).pose.position.y      = point(1);
+  pure_pursuit_vis_msg_.markers.at(point_id).header.stamp         = ros::Time::now();
 }
 #endif /* SGT_VISUALIZATION */
