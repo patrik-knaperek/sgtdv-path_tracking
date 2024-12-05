@@ -39,6 +39,7 @@ public:
 
     /* steering control parameters*/
     float steering_k;
+    float steering_smooth;
     Utils::Range<float> steering;
     Utils::Range<float> lookahead_dist;
 
@@ -49,7 +50,7 @@ public:
   PathTracking() = default;
   ~PathTracking() = default;
 
-  sgtdv_msgs::Control update(const sgtdv_msgs::PathTrackingMsg &msg);
+  void update(const sgtdv_msgs::PathTrackingMsg &msg, sgtdv_msgs::Control *cmd);
 
   void resetIntegral()
   {
@@ -83,7 +84,7 @@ public:
 private:
   int8_t computeSpeedCommand(const float act_speed, const int8_t speed_cmd_prev);
 
-  float computeSteeringCommand(const sgtdv_msgs::PathTrackingMsg &msg);
+  float computeSteeringCommand(const sgtdv_msgs::PathTrackingMsg &msg, const float steer_cmd_prev);
 
   float computeLookAheadDist(const float speed) const;
 
