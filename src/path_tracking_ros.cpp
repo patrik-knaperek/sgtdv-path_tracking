@@ -32,45 +32,44 @@ PathTrackingROS::PathTrackingROS(ros::NodeHandle& handle)
     , velocity_sub_(handle.subscribe("odometry/velocity", 1, &PathTrackingROS::velocityCallback, this))
     , stop_server_(handle.advertiseService("path_tracking/stop", &PathTrackingROS::stopCallback, this))
     , start_server_(handle.advertiseService("path_tracking/start", &PathTrackingROS::startCallback, this))
-    , set_speed_server_(handle.advertiseService("path_tracking/set_speed", &PathTrackingROS::setSpeedCallback, this))
 {
-  loadParams();
+  path_tracking_obj_.init(loadParams());
 
 #ifdef SGT_VISUALIZATION
   initPurePursuitMarkers();
 #endif
 }
 
-void PathTrackingROS::loadParams(void)
+PathTracking::Params PathTrackingROS::loadParams(void)
 {
   ROS_INFO("LOADING PARAMETERS");
   PathTracking::Params params;
   
   /* load vehicle parameters */
-  Utils::loadParam(handle_, "/vehicle/car_length", &params.car_length);
-  Utils::loadParam(handle_, "/vehicle/rear_wheels_offset", &params.rear_wheels_offset);
-  Utils::loadParam(handle_, "/vehicle/front_wheels_offset", &params.front_wheels_offset);
+  Utils::loadParam(handle_, "/vehicle/car_length", &params.steering.car_length);
+  Utils::loadParam(handle_, "/vehicle/rear_wheels_offset", &params.steering.rear_wheels_offset);
+  Utils::loadParam(handle_, "/vehicle/front_wheels_offset", &params.steering.front_wheels_offset);
   
-  /* load PID controller parameters */
-  Utils::loadParam(handle_, "/controller/speed/p", &params.speed_p);
-  Utils::loadParam(handle_, "controller/speed/i", &params.speed_i);
-  Utils::loadParam(handle_, "/controller/speed/min", &params.speed.min);
-  Utils::loadParam(handle_, "/controller/speed/max", &params.speed.max);
-  // Utils::loadParam(handle_, "/controller/speed/ref_speed", &params.refSpeed);
-  Utils::loadParam(handle_, "/controller/speed/speed_raise_rate", &params.speed_raise_rate);
-  Utils::loadParam(handle_, "/controller/steering/k", &params.steering_k);
-  Utils::loadParam(handle_, "/controller/steering/smooth", &params.steering_smooth);
-  Utils::loadParam(handle_, "/controller/steering/min", &params.steering.min);
-  Utils::loadParam(handle_, "/controller/steering/max", &params.steering.max);
-  Utils::loadParam(handle_, "/controller/steering/lookahead_dist_min", &params.lookahead_dist.min);
-  Utils::loadParam(handle_, "/controller/steering/lookahead_dist_max", &params.lookahead_dist.max);
+  /* load speed controller parameters */
+  Utils::loadParam(handle_, "/controller/speed/p", &params.speed.p);
+  Utils::loadParam(handle_, "controller/speed/i", &params.speed.i);
+  Utils::loadParam(handle_, "/controller/speed/min", &params.speed.range.min);
+  Utils::loadParam(handle_, "/controller/speed/max", &params.speed.range.max);
+  
+  /* load steering controller parameters */
+  Utils::loadParam(handle_, "/controller/steering/k", &params.steering.k);
+  Utils::loadParam(handle_, "/controller/steering/smooth", &params.steering.smooth);
+  Utils::loadParam(handle_, "/controller/steering/min", &params.steering.range.min);
+  Utils::loadParam(handle_, "/controller/steering/max", &params.steering.range.max);
+  Utils::loadParam(handle_, "/controller/steering/lookahead_dist_min", &params.steering.lookahead_dist.min);
+  Utils::loadParam(handle_, "/controller/steering/lookahead_dist_max", &params.steering.lookahead_dist.max);
 
-  Utils::loadParam(handle_, "/track_loop", true, &params.track_loop);
-  path_tracking_obj_.setParams(params);
+  Utils::loadParam(handle_, "/track_loop", true, &params.steering.track_loop);
+  
+  return params;
 }
 
-
-void PathTrackingROS::trajectoryCallback(const sgtdv_msgs::Point2DArr::ConstPtr &msg)
+void PathTrackingROS::trajectoryCallback(const sgtdv_msgs::Trajectory::ConstPtr &msg)
 {
   path_tracking_msg_.trajectory = *msg;
   trajectory_ready_ = true;
@@ -90,28 +89,17 @@ void PathTrackingROS::velocityCallback(const sgtdv_msgs::CarVel::ConstPtr &msg)
 
 bool PathTrackingROS::stopCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
-  if(!stopped_)
-  {
-    stopped_ = true;
-    ROS_INFO("STOPPING VEHICLE");
-  }
+  path_tracking_obj_.stopVehicle();
+
   return true;
 }
 bool PathTrackingROS::startCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)
 {
   loadParams();
-  path_tracking_obj_.resetIntegral();
-  stopped_ = false;
 
-  ROS_INFO("STARTING VEHICLE");
-
+  path_tracking_obj_.startVehicle();
+  
   return true;
-}
-
-bool PathTrackingROS::setSpeedCallback(sgtdv_msgs::Float32Srv::Request &req, sgtdv_msgs::Float32Srv::Response &res)
-{
-  path_tracking_obj_.setRefSpeed(req.data);
-  return 1;
 }
 
 void PathTrackingROS::update(void)
@@ -125,28 +113,20 @@ void PathTrackingROS::update(void)
     debug_vis_pub_.publish(state);
   #endif // SGT_DEBUG_STATE
 
-    static sgtdv_msgs::Control control_msg;
+    sgtdv_msgs::Control control_msg;
+    
+    path_tracking_obj_.update(path_tracking_msg_, &control_msg);
 
-    if(stopped_)
-    {
-      control_msg.speed = 0.0;
-      control_msg.steering_angle = 0.0;
-    }
-    else
-    {
-      path_tracking_obj_.update(path_tracking_msg_, &control_msg);
+  #ifdef SGT_VISUALIZATION
+    const auto pp_points = path_tracking_obj_.getPurePursuitPoints();
+    visualizePoint(pp_points.first, 0); // target point
+    visualizePoint(pp_points.second, 1);  // closest trajectory point
 
-    #ifdef SGT_VISUALIZATION
-      const auto pp_points = path_tracking_obj_.getPurePursuitPoints();
-      visualizePoint(pp_points.first, 0); // target point
-      visualizePoint(pp_points.second, 1);  // closest trajectory point
-
-      const auto axle_pos = path_tracking_obj_.getAxlePositions();
-      visualizePoint(axle_pos.first, 2);  // rear axle position
-      visualizePoint(axle_pos.second, 3); // front axle position
-      pure_pursuit_vis_pub_.publish(pure_pursuit_vis_msg_);
-    #endif /* SGT_VISUALIZATION */
-    }
+    const auto axle_pos = path_tracking_obj_.getAxlePositions();
+    visualizePoint(axle_pos.first, 2);  // rear axle position
+    visualizePoint(axle_pos.second, 3); // front axle position
+    pure_pursuit_vis_pub_.publish(pure_pursuit_vis_msg_);
+  #endif /* SGT_VISUALIZATION */
 
     control_msg.stamp = ros::Time::now();
     cmd_pub_.publish(control_msg);

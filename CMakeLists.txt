@@ -28,7 +28,13 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/../
 )
 
-add_executable(${PROJECT_NAME} src/path_tracking_node.cpp src/path_tracking_ros.cpp src/path_tracking.cpp)
+add_executable(
+  ${PROJECT_NAME} 
+  src/path_tracking_node.cpp 
+  src/path_tracking_ros.cpp 
+  src/path_tracking.cpp
+  src/speed_control.cpp
+  src/steering_control.cpp)
 
 target_link_libraries(path_tracking
   ${catkin_LIBRARIES}
