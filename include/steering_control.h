@@ -19,7 +19,7 @@ public:
     float rear_wheels_offset;
     float front_wheels_offset;
 
-    Utils::Range<float> range;
+    Utils::Range<float> cmd_range;
 
     /* Pure Pursuit steering control parameters */
     float k;
@@ -30,7 +30,7 @@ public:
   };
 public:
   explicit SteeringControl(const Params& params): params_(params) {};
-  
+
   ~SteeringControl() = default;
 
   float computeSteeringCommand(const sgtdv_msgs::PathTrackingMsg &msg);

@@ -1,6 +1,6 @@
 /*****************************************************/
 /* Organization: Stuba Green Team
-/* Authors: Juraj Krasňanský, Patrik Knaperek
+/* Authors: Patrik Knaperek
 /*****************************************************/
 
 /* Header */
@@ -51,16 +51,25 @@ PathTracking::Params PathTrackingROS::loadParams(void)
   Utils::loadParam(handle_, "/vehicle/front_wheels_offset", &params.steering.front_wheels_offset);
   
   /* load speed controller parameters */
-  Utils::loadParam(handle_, "/controller/speed/p", &params.speed.p);
-  Utils::loadParam(handle_, "controller/speed/i", &params.speed.i);
-  Utils::loadParam(handle_, "/controller/speed/min", &params.speed.range.min);
-  Utils::loadParam(handle_, "/controller/speed/max", &params.speed.range.max);
+  Utils::loadParam(handle_, "/controller/speed/type", 0, &params.speed.type);
+  Utils::loadParam(handle_, "/controller/speed/cmd_min", &params.speed.cmd_range.min);
+  Utils::loadParam(handle_, "/controller/speed/cmd_max", &params.speed.cmd_range.max);
+  Utils::loadParam(handle_, "/controller/speed/basic/p", &params.speed.p);
+  Utils::loadParam(handle_, "controller/speed/basic/i", &params.speed.i);
+  Utils::loadParam(handle_, "/controller/speed/advanced/K", &params.speed.K);
+  Utils::loadParam(handle_, "/controller/speed/advanced/T", &params.speed.T);
+  Utils::loadParam(handle_, "/controller/speed/advanced/w0", &params.speed.w0);
+  Utils::loadParam(handle_, "/controller/speed/advanced/b", &params.speed.b);
+  Utils::loadParam(handle_, "/controller/speed/ref_sig_shape/a_limit", &params.speed.a_limit);
+  Utils::loadParam(handle_, "/controller/speed/ref_sig_shape/j_limit/", &params.speed.j_limit);
+  Utils::loadParam(handle_, "/controller/speed/ref_sig_shape/K1", &params.speed.K1);
+  Utils::loadParam(handle_, "/controller/speed/ref_sig_shape/K2", &params.speed.K2);
   
   /* load steering controller parameters */
   Utils::loadParam(handle_, "/controller/steering/k", &params.steering.k);
   Utils::loadParam(handle_, "/controller/steering/smooth", &params.steering.smooth);
-  Utils::loadParam(handle_, "/controller/steering/min", &params.steering.range.min);
-  Utils::loadParam(handle_, "/controller/steering/max", &params.steering.range.max);
+  Utils::loadParam(handle_, "/controller/steering/cmd_min", &params.steering.cmd_range.min);
+  Utils::loadParam(handle_, "/controller/steering/cmd_max", &params.steering.cmd_range.max);
   Utils::loadParam(handle_, "/controller/steering/lookahead_dist_min", &params.steering.lookahead_dist.min);
   Utils::loadParam(handle_, "/controller/steering/lookahead_dist_max", &params.steering.lookahead_dist.max);
 
@@ -72,19 +81,34 @@ PathTracking::Params PathTrackingROS::loadParams(void)
 void PathTrackingROS::trajectoryCallback(const sgtdv_msgs::Trajectory::ConstPtr &msg)
 {
   path_tracking_msg_.trajectory = *msg;
-  trajectory_ready_ = true;
+  
+  if(!trajectory_ready_)
+  {
+    trajectory_ready_ = true;
+    ROS_DEBUG("Trajectory ready");
+  }
 }
 
 void PathTrackingROS::poseCallback(const sgtdv_msgs::CarPose::ConstPtr &msg)
 {
   path_tracking_msg_.car_pose = *msg;
-  pose_ready_ = true;
+
+  if(!pose_ready_)
+  {
+    pose_ready_ = true;
+    ROS_DEBUG("Pose ready");
+  }
 }
 
 void PathTrackingROS::velocityCallback(const sgtdv_msgs::CarVel::ConstPtr &msg)
 {
   path_tracking_msg_.car_vel = *msg;
-  velocity_ready_ = true;
+
+  if(!velocity_ready_)
+  {
+    velocity_ready_ = true;
+    ROS_DEBUG("Velocity ready");
+  }
 }
 
 bool PathTrackingROS::stopCallback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res)

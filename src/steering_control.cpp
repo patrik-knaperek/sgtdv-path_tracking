@@ -22,10 +22,9 @@ float SteeringControl::computeSteeringCommand(const sgtdv_msgs::PathTrackingMsg 
   float steering_angle = static_cast<float>(std::atan2(2*std::sin(alpha)*params_.car_length,lookahead_dist));
 
   /* low-pass filter */
-  steering_angle = params_.smooth * steering_angle + (1- params_.smooth) * cmd_last_;
+  steering_angle = (1 - params_.smooth) * steering_angle + params_.smooth * cmd_last_;
 
-  /* saturation */
-  cmd_last_ = std::max(params_.range.min, std::min(params_.range.max, steering_angle));
+  cmd_last_ = Utils::saturation(steering_angle, params_.cmd_range.min, params_.cmd_range.max);
   
   return cmd_last_;
 }
@@ -34,8 +33,7 @@ float SteeringControl::computeLookAheadDist(const float speed) const
 {
   float lookahead_dist = params_.k * speed;
   
-  /* saturation */
-  lookahead_dist = std::max(params_.lookahead_dist.min, std::min(params_.lookahead_dist.max, lookahead_dist));
+  lookahead_dist = Utils::saturation(lookahead_dist, params_.lookahead_dist.min, params_.lookahead_dist.max);
 
   return lookahead_dist;
 }

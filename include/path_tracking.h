@@ -1,6 +1,6 @@
 /*****************************************************/
 /* Organization: Stuba Green Team
-/* Authors: Juraj Krasňanský, Patrik Knaperek
+/* Authors: Patrik Knaperek
 /*****************************************************/
 
 #pragma once
@@ -53,8 +53,8 @@ public:
 
 private:
 
-  SpeedControl *speed_control_obj_ = nullptr;
-  SteeringControl *steering_control_obj_ = nullptr;
+  std::unique_ptr<SpeedControl> speed_control_obj_ = nullptr;
+  std::unique_ptr<SteeringControl> steering_control_obj_ = nullptr;
   
   bool stopped_ = true;
 };

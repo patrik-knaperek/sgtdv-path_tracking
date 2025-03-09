@@ -14,12 +14,15 @@ class SpeedControl
 public:
   struct Params
   {
-    /* speed controller parameters */
-    float p;
-    float i;
-    Utils::Range<float> range;
-    float a_limit, j_limit, K1, K2; // reference signal shaping parameters
-    float k1, k2;                   // feed-forward gains
+    Utils::Range<double> cmd_range;
+    int type;
+    double a_limit, j_limit, K1, K2; // reference signal shaping parameters
+    /* basic speed controller parameters */
+    double p;
+    double i;
+    /* advanced speed controller parameters */
+    double K, T;                     // vehicle 1st order model parameters
+    double w0, b;                    // Pole Placement parameters
   };
 
 public:
@@ -29,9 +32,18 @@ public:
 
   int8_t computeSpeedCommand(const float act_speed, const float ref_speed);
 
+  void reinit(void);
+
 private:
   Params params_;
 
-  float speed_integral_error_ = 0.;
-  int8_t cmd_last_ = 0;
+  double w_ = 0.;        // shaped reference signal (speed)
+  double w_dot_ = 0.;    // 1st derivate of shaped reference signal (acceleration)
+  double w_ddot_ = 0.;   // 2nd derivate of shaped reference signal (jerk)
+
+  double jerk_integral_ = 0.;    // jerk integrator
+  double acc_integral_ = 0.;     // acceleration integrator
+  double aw_ = 0.;               // anti-windup feedback loop
+
+  double speed_integral_ = 0.;   // IP controller integrator
 };

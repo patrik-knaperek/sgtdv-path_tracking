@@ -1,6 +1,6 @@
 /*****************************************************/
 /* Organization: Stuba Green Team
-/* Authors: Juraj Krasňanský, Patrik Knaperek
+/* Authors: Patrik Knaperek
 /*****************************************************/
 
 #include "path_tracking_ros.h"

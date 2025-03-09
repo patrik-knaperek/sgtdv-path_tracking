@@ -5,18 +5,33 @@ vehicle:
 
 controller:
   speed:
-    p: 8.0       
-    i: 70.0
-    min: 0
-    max: 100 
-    # ref_speed: 0.8
-    speed_raise_rate: 20
+    cmd_min: 0            # [%] of maximumtorque
+    cmd_max: 100          # [%] of maximumtorque
+    type: 0               # speed controller type: 
+                          # 0 - basic PI controller, 
+                          # 1 - advanced IP controller with reference signal shaping and feed-forward gains
+    basic:
+      p: 8.0       
+      i: 70.0
+    advanced:
+    # vehicle simplified model properties
+      K:                  # 1st order model gain
+      T:                  # 1st order model time constant
+    # Pole Placement parameters
+      w0:                 # natural frequency
+      b:                  # damping ratio
+    ref_sig_shape:        # reference signal shaping parameters
+      a_limit:            # [m.s^-2] acceleration saturation limit
+      j_limit:            # [m.s^-3] jerk saturation limit
+      K1:                 # jerk shaping factor
+      K2:                 # acceleration shaping factor
+
   steering:
-    k: 1.0
-    min: -1
-    max: 1
-    smooth: 0.05
-    lookahead_dist_min: 1.0
-    lookahead_dist_max: 3.0
+    k: 1.0                # Pure Pursuit gain
+    smooth: 0.05          # [float from 0 (no filter) to 1 (full filter)] LP filter smoothing factor
+    cmd_min: -1.0         # [rad]
+    cmd_max: 1.0          # [rad]
+    lookahead_dist_min: 1.0   # [m]
+    lookahead_dist_max: 3.0   # [m]
 
 track_loop: false
